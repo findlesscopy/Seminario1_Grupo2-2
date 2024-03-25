@@ -595,45 +595,60 @@ app.post('/descripcion', async (req, res) => {
 app.post('/reconocimiento_facial', async (req, res) => {
     try {
         const { imagen, username } = req.body;
-        
-        // Buscar la foto de perfil actual del usuario en la base de datos
-        pool.query('SELECT url_foto FROM fotos_perfil INNER JOIN fotos ON fotos_perfil.id_foto = fotos.id_foto WHERE fotos_perfil.id_usuario = ? AND fotos_perfil.estado = ?', [username, 'activo'], async (error, results, fields) => {
+
+        // Primero, obtén el id_usuario correspondiente al username
+        pool.query('SELECT id_usuario FROM Usuarios WHERE username = ?', [username], async (error, results, fields) => {
             if (error) {
                 console.error('Error:', error);
-                res.status(500).json({ mensaje: 'Error interno del servidor en buscar foto de perfil' });
+                res.status(500).json({ mensaje: 'Error interno del servidor al buscar usuario' });
             } else {
+                // Asegúrate de que se encontró un usuario
                 if (results.length > 0) {
-                    const fotoPerfil = results[0].url_foto;
-                    
-                    // Obtener la imagen de la foto de perfil desde AWS S3
-                    const s3Params = {
-                        Bucket: nombreBucket,
-                        Key: fotoPerfil
-                    };
-                    const s3Response = await s3.getObject(s3Params).promise();
-                    const fotoPerfilBuffer = s3Response.Body;
-                    
-                    const params = {
-                        SourceImage: {
-                            Bytes: fotoPerfilBuffer
-                        },
-                        TargetImage: {
-                            Bytes: Buffer.from(imagen, 'base64')
-                        },
-                        SimilarityThreshold: 10
-                    };
-            
-                    const response = await rekognition.compareFaces(params).promise();
-                    res.status(200).json({ Comparacion: response.FaceMatches[0].Similarity });
+                    const id_usuario = results[0].id_usuario;
+
+                    // Ahora, realiza la consulta original con el id_usuario correcto
+                    pool.query('SELECT url_foto FROM fotos_perfil INNER JOIN fotos ON fotos_perfil.id_foto = fotos.id_foto WHERE fotos_perfil.id_usuario = ? AND fotos_perfil.estado = ?', [id_usuario, 'activo'], async (error, results, fields) => {
+                        if (error) {
+                            console.error('Error:', error);
+                            res.status(500).json({ mensaje: 'Error interno del servidor en buscar foto de perfil' });
+                        } else {
+                            if (results.length > 0) {
+                                const fotoPerfil = results[0].url_foto;
+
+                                // Obtener la imagen de la foto de perfil desde AWS S3
+                                const s3Params = {
+                                    Bucket: nombreBucket,
+                                    Key: fotoPerfil
+                                };
+                                const s3Response = await s3.getObject(s3Params).promise();
+                                const fotoPerfilBuffer = s3Response.Body;
+
+                                const params = {
+                                    SourceImage: {
+                                        Bytes: fotoPerfilBuffer
+                                    },
+                                    TargetImage: {
+                                        Bytes: Buffer.from(imagen, 'base64')
+                                    },
+                                    SimilarityThreshold: 10
+                                };
+
+                                const response = await rekognition.compareFaces(params).promise();
+                                res.status(200).json({ Comparacion: response.FaceMatches[0].Similarity });
+                            } else {
+                                res.status(404).json({ mensaje: 'No se encontró la foto de perfil del usuario' });
+                            }
+                        }
+                    });
                 } else {
-                    res.status(404).json({ mensaje: 'No se encontró la foto de perfil del usuario' });
+                    res.status(404).json({ mensaje: 'No se encontró el usuario' });
                 }
             }
         });
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ mensaje: 'Error interno del servidor en comparar fotos' });
-    }
+    }
 });
 
 // creación y asignación de albumes a la foto

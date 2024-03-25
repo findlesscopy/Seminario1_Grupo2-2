@@ -599,6 +599,9 @@ app.post('/reconocimiento_facial', async (req, res) => {
 
         // Primero, obtén el id_usuario correspondiente al username
         pool.query('SELECT id_usuario FROM Usuarios WHERE username = ?', [username], async (error, results, fields) => {
+
+        // Primero, obtén el id_usuario correspondiente al username
+        pool.query('SELECT id_usuario FROM Usuarios WHERE username = ?', [username], async (error, results, fields) => {
             if (error) {
                 console.error('Error:', error);
                 res.status(500).json({ mensaje: 'Error interno del servidor al buscar usuario' });
@@ -670,6 +673,7 @@ app.post('/reconocimiento_facial', async (req, res) => {
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ mensaje: 'Error interno del servidor en comparar fotos' });
+    }
     }
 });
 

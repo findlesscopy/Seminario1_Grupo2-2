@@ -3,6 +3,7 @@ import {
   Navbar,
   Typography,
 } from "@material-tailwind/react";
+import Cookies from "js-cookie";
 
 
 export function NavBarSimple() {
@@ -105,6 +106,10 @@ export function NavBarSimple() {
             <a
               href="/"
               className="flex items-center hover:text-blue-500 transition-colors"
+              onClick={() => {
+                Cookies.remove("username");
+                Cookies.remove("id");
+              } }
             >
               Cerrar Sesión
             </a>

@@ -1,8 +1,8 @@
 const dotenv = require('dotenv');
+const BodyParser = require('body-parser');
 const express = require('express');
 const mysql = require('mysql');
 const AWS = require('aws-sdk');
-const bodyParser = require('body-parser');
 const cors = require('cors'); // Importa el paquete CORS
 const fs = require('fs');
 const bcrypt = require('bcrypt');
@@ -39,11 +39,12 @@ const nombreBucket = 'practica2-g2-imagenes-b';
 // Create an Express app
 const app = express();
 
+
+app.use(BodyParser.json({ limit: '50mb' }));
+app.use(BodyParser.urlencoded({ extended: true, limit: '50mb' }));
+
 // Middleware to parse JSON bodies
 app.use(express.json());
-
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-app.use(express.json({ limit: '50mb' }));
 
 // Implementar CORS
 app.use(cors());
@@ -595,45 +596,81 @@ app.post('/descripcion', async (req, res) => {
 app.post('/reconocimiento_facial', async (req, res) => {
     try {
         const { imagen, username } = req.body;
-        
-        // Buscar la foto de perfil actual del usuario en la base de datos
-        pool.query('SELECT url_foto FROM fotos_perfil INNER JOIN fotos ON fotos_perfil.id_foto = fotos.id_foto WHERE fotos_perfil.id_usuario = ? AND fotos_perfil.estado = ?', [username, 'activo'], async (error, results, fields) => {
+
+        // Primero, obtén el id_usuario correspondiente al username
+        pool.query('SELECT id_usuario FROM Usuarios WHERE username = ?', [username], async (error, results, fields) => {
             if (error) {
                 console.error('Error:', error);
-                res.status(500).json({ mensaje: 'Error interno del servidor en buscar foto de perfil' });
+                res.status(500).json({ mensaje: 'Error interno del servidor al buscar usuario' });
             } else {
+                // Asegúrate de que se encontró un usuario
                 if (results.length > 0) {
-                    const fotoPerfil = results[0].url_foto;
-                    
-                    // Obtener la imagen de la foto de perfil desde AWS S3
-                    const s3Params = {
-                        Bucket: nombreBucket,
-                        Key: fotoPerfil
-                    };
-                    const s3Response = await s3.getObject(s3Params).promise();
-                    const fotoPerfilBuffer = s3Response.Body;
-                    
-                    const params = {
-                        SourceImage: {
-                            Bytes: fotoPerfilBuffer
-                        },
-                        TargetImage: {
-                            Bytes: Buffer.from(imagen, 'base64')
-                        },
-                        SimilarityThreshold: 10
-                    };
-            
-                    const response = await rekognition.compareFaces(params).promise();
-                    res.status(200).json({ Comparacion: response.FaceMatches[0].Similarity });
+                    const id_usuario = results[0].id_usuario;
+
+                    // Ahora, realiza la consulta original con el id_usuario correcto
+                    pool.query('SELECT url_foto FROM fotos_perfil INNER JOIN fotos ON fotos_perfil.id_foto = fotos.id_foto WHERE fotos_perfil.id_usuario = ? AND fotos_perfil.estado = ?', [id_usuario, 'activo'], async (error, results, fields) => {
+                        if (error) {
+                            console.error('Error:', error);
+                            res.status(500).json({ mensaje: 'Error interno del servidor en buscar foto de perfil' });
+                        } else {
+                            if (results.length > 0) {
+                                const fotoPerfil = results[0].url_foto;
+
+                                //console.log('URL de la foto de perfil:', fotoPerfil);
+                                const claveFoto = fotoPerfil.split('/').slice(-2)[0] + '/' + fotoPerfil.split('/').slice(-1)[0];
+                                //console.log('Clave de la foto de perfil:', claveFoto);
+                                // Verifica que la URL de la foto de perfil no sea nula o indefinida
+                                if (fotoPerfil) {
+                                    // Obtener la imagen de la foto de perfil desde AWS S3
+                                    const s3Params = {
+                                        Bucket: nombreBucket,
+                                        Key: claveFoto
+                                    };
+                                    //console.log("imagen desde el back", imagen)
+                                    try {
+                                        const s3Response = await s3.getObject(s3Params).promise();
+                                        const fotoPerfilBuffer = s3Response.Body;
+
+                                        const params = {
+                                            SourceImage: {
+                                                Bytes: fotoPerfilBuffer
+                                            },
+                                            TargetImage: {
+                                                Bytes: Buffer.from(imagen, 'base64')
+                                            },
+                                            SimilarityThreshold: 10
+                                        };
+
+                                        const response = await rekognition.compareFaces(params).promise();
+                                        const similarity = response.FaceMatches[0]?.Similarity || 0;
+                                        let esLaMismaPersona = false;
+                                        if (similarity > 90) {
+                                            esLaMismaPersona = true;
+                                        }
+
+                                        res.status(200).json({ Comparacion: similarity, EsLaMismaPersona: esLaMismaPersona, id_usuario: id_usuario });
+                                        
+                                    } catch (error) {
+                                        console.error('Error al obtener la foto de perfil de S3:', error);
+                                        res.status(500).json({ mensaje: 'Error interno del servidor al obtener la foto de perfil de S3' });
+                                    }
+                                } else {
+                                    res.status(404).json({ mensaje: 'La URL de la foto de perfil del usuario es nula o indefinida' });
+                                }
+                            } else {
+                                res.status(404).json({ mensaje: 'No se encontró la foto de perfil del usuario' });
+                            }
+                        }
+                    });
                 } else {
-                    res.status(404).json({ mensaje: 'No se encontró la foto de perfil del usuario' });
+                    res.status(404).json({ mensaje: 'No se encontró el usuario' });
                 }
             }
         });
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ mensaje: 'Error interno del servidor en comparar fotos' });
-    }
+    }
 });
 
 // creación y asignación de albumes a la foto

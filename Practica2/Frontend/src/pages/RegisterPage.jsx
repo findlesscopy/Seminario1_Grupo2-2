@@ -39,66 +39,60 @@ function RegisterPage() {
   };
 
   const onSubmit = async (data) => {
-    var imagenSubida = false;
-    console.log(previewImage.split(",")[1].length);
+    console.log(previewImage.split(",")[1].length)
     try {
-      const nombreFotoEnS3 = "Fotos_Perfil/" + data.username + cantidad;
-
-      const params = {
-        Bucket: nombreBucket,
-        Key: nombreFotoEnS3,
-        Body: previewImage.split(",")[1],
-        ContentType: "image/jpeg", // Tipo de contenido de la imagen
-      };
-      s3.upload(params, (err, data) => {
-        if (err) {
-          console.error("Error al subir la foto a S3:", err);
-          res.status(500).json({ error: "Error al subir la foto a S3" });
-          return;
-        } else {
-          imagenSubida = true;
-          console.log("Foto subida correctamente a S3:", data.Location);
-          // URL de la foto en S3
-          const url = data.Location;
-
-          if (imagenSubida) {
-            fetch(`${API_URL}/usuarios_crear`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                username: data.username,
-                nombre: data.name,
-                contraseña: data.password,
-                url_foto: url,
-              }),
-            })
-              .then((response) => {
-                if (!response.ok) {
-                  throw new Error("El usuario ya existe");
-                }
-                return response.json();
-              })
-              .then((data) => {
-                console.log("Usuario registrado correctamente");
-                Cookies.set("id_usuario", data.id_usuario);
-                Cookies.set("username", data.username);
-                Cookies.set("nombre", data.name);
-              })
-              .catch((error) => {
-                console.error("Error:", error);
-                alert("El usuario ya existe");
-              });
-          }
-        }
+      // Subir la imagen
+      const imageResponse = await fetch(`${API_URL}/fotos-perfil`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": `${previewImage.split(",")[1].length}`,
+        },
+        body: JSON.stringify({
+          nombre: data.username, // Utiliza el nombre de usuario del formulario
+          imagenBase64: previewImage.split(",")[1],
+          id_usuario: parseInt(Cookies.get("id_usuario")),
+        }),
       });
+  
+      // Verifica si la imagen se subió correctamente
+      if (!imageResponse.ok) {
+        const errorData = await imageResponse.json();
+        setError("Error al subir la imagen");
+        return; // Termina la función si hay un error al subir la imagen
+      }else {
+        console.log("Imagen subida correctamente");
+      }
+  
+      // Si la imagen se subió correctamente, registra al usuario
+      const userResponse = await fetch(`${API_URL}/usuarios_crear`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: data.username,
+          nombre: data.name,
+          contraseña: data.password,
+        }),
+      });
+  
+      if (!userResponse.ok) {
+        const errorData = await userResponse.json();
+        setError("El usuario ya existe");
+      } else {
+        // Registro exitoso
+        console.log("Usuario registrado correctamente");
+        const id_usuario = await userResponse.json();
+  
+        Cookies.set("id_usuario", id_usuario.id_usuario);
+        Cookies.set("username", data.username);
+        Cookies.set("nombre", data.name);
+      }
     } catch (error) {
-      console.error("Error al subir la foto a S3:", error);
-      setError("Error al subir la foto a S3");
+      console.error("Error:", error);
     }
   };
-
   return (
     <div className="h-screen flex flex-col justify-center items-center">
       <Card>
@@ -146,6 +140,11 @@ function RegisterPage() {
           {passwordMismatch && (
             <p style={{ color: "red" }}>Las contraseñas no coinciden.</p>
           )}
+          {errors.password_repeat && (
+            <span className="text-red-500">
+              {errors.password_repeat.message}
+            </span>
+          )}
 
           <Label htmlFor="image">Imagen de perfil:</Label>
           <Input
@@ -175,6 +174,7 @@ function RegisterPage() {
           </button>
         </form>
       </Card>
+      {error && <ErrorModal message={error} onClose={() => setError(null)} />}
     </div>
   );
 }

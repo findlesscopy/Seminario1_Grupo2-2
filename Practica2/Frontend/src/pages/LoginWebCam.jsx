@@ -3,12 +3,16 @@ import { Label } from "../components/ui/Label";
 import { Card } from "../components/ui/Card";
 import { Link } from "react-router-dom";
 import { Input } from "../components/ui/Input";
+import { API_URL } from "./url";
+import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 
 function App() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const usernameRef = useRef(null); // Referencia para el campo de entrada de usuario
   const [base64Image, setBase64Image] = useState(null);
+  const navigate = useNavigate();
 
   const startCamera = async () => {
     const constraints = { video: true };
@@ -17,7 +21,7 @@ function App() {
     videoRef.current.play();
   };
 
-  const takePhoto = () => {
+  const takePhoto = async () => {
     const context = canvasRef.current.getContext("2d");
     context.drawImage(
       videoRef.current,
@@ -28,26 +32,38 @@ function App() {
     );
     const base64String = canvasRef.current.toDataURL("image/png").split(",")[1];
     setBase64Image(base64String);
-
+      // apagar la camara
+    const stream = videoRef.current.srcObject;
+    const tracks = stream.getTracks();
+    tracks.forEach((track) => {
+      track.stop();
+    }
+    );
     // Obtener el valor del campo de entrada de usuario
     const username = usernameRef.current.value;
     console.log("Username:", username);
-    fetch("http://localhost:3000/reconocimiento_facial", {
+    console.log("Base64:", base64String);
+    const response = await fetch(`${API_URL}/reconocimiento_facial`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Content-Length": `${base64Image.split(",")[1].length}`,
       },
       body: JSON.stringify({
-        image: base64Image,
-        username: username, 
+        imagen: base64String,
+        username: username,
       }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((error) => {});
+    });
+    if (response.ok) {
+      const responseData = await response.json();
+      console.log(responseData);
+      if (responseData.EsLaMismaPersona) {
+        Cookies.set("id", responseData.id_usuario);
+        Cookies.set("username", username);
+        navigate("/principal");
+      }else{
+        alert("No se reconoció la cara");
+      }
+    }
   };
 
   return (
@@ -62,14 +78,19 @@ function App() {
           <h1 className="text-2xl font-bold">Login</h1>
 
           <Label htmlFor="username">Username:</Label>
-          <Input type="text" name="username" placeholder="Username" ref={usernameRef} />
+          <Input
+            type="text"
+            name="username"
+            placeholder="Username"
+            ref={usernameRef}
+          />
           <Link className="text-xs block my-1 text-slate-300" to="/register">
             ¿No tienes cuenta? Registrate
           </Link>
-          <button className="camara-btn" onClick={startCamera}>
+          <button className="bg-indigo-500 px-4 py-1 rounded-md my-2 disabled:bg-indigo-300 mx-2" onClick={startCamera}>
             Iniciar cámara
           </button>
-          <button className="foto-btn" onClick={takePhoto}>
+          <button className="bg-indigo-500 px-4 py-1 rounded-md my-2 disabled:bg-indigo-300 mx-2" onClick={takePhoto}>
             Log in
           </button>
         </Card>

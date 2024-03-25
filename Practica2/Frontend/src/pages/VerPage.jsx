@@ -30,12 +30,13 @@ function VerPage() {
           }
         }
         const uniqueFotos = Array.from(tempSet);
+        console.log("Fotos de perfil:", uniqueFotos);
         setFotosPerfil(uniqueFotos);
       })
       .catch((error) =>
         console.error("Error al obtener datos de los albumes:", error)
       );
-
+    
     // Obtener los nombres y IDs de los álbumes
     fetch(`${API_URL}/obtener_albumes`, {
       method: "POST",

@@ -599,9 +599,6 @@ app.post('/reconocimiento_facial', async (req, res) => {
 
         // Primero, obtén el id_usuario correspondiente al username
         pool.query('SELECT id_usuario FROM Usuarios WHERE username = ?', [username], async (error, results, fields) => {
-
-        // Primero, obtén el id_usuario correspondiente al username
-        pool.query('SELECT id_usuario FROM Usuarios WHERE username = ?', [username], async (error, results, fields) => {
             if (error) {
                 console.error('Error:', error);
                 res.status(500).json({ mensaje: 'Error interno del servidor al buscar usuario' });
@@ -670,69 +667,69 @@ app.post('/reconocimiento_facial', async (req, res) => {
                 }
             }
         });
-    } catch (error) {
+        } catch (error) {
         console.error('Error:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor en comparar fotos' });
+                res.status(500).json({ mensaje: 'Error interno del servidor en comparar fotos' });
+        }
     }
-    }
-});
+);
 
-// creación y asignación de albumes a la foto
-app.post('/albumes_rekognition', async (req, res) => {
-    try {
-        const { imagen, id_usuario } = req.body;
-        
-        // Decodificar la imagen de base64
-        const imageBuffer = Buffer.from(imagen, 'base64');
-    
-        // Parámetros para la operación detectLabels
-        const params = {
-          Image: {
-            Bytes: imageBuffer
-          },
-          MaxLabels: 100,
-          MinConfidence: 70
-        };
-    
-        // Llamar a la operación detectLabels de Rekognition
-        const response = await rekognition.detectLabels(params).promise();
-        
-        // Buscar las etiquetas que tienen "Animal" en sus padres y que tienen instancias
-        const animalLabels = response.Labels.filter(label => label.Parents.some(parent => parent.Name === 'Animal') && label.Instances.length > 0);
-        
-        // Crear un nuevo álbum para la primera etiqueta encontrada y asignarlo al usuario
-        if (animalLabels.length > 0) {
-            const nombreAlbum = animalLabels[0].Name;
-            pool.query('INSERT INTO albumes (nombre, id_usuario) VALUES (?, ?)', [nombreAlbum, id_usuario], (error, results, fields) => {
-            if (error) {
-                console.error('Error:', error);
-                res.status(500).json({ mensaje: 'Error interno del servidor en crear album' });
-            } else {
-                console.log(`Álbum "${nombreAlbum}" creado y asignado al usuario con ID ${id_usuario}`);
+        // creación y asignación de albumes a la foto
+        app.post('/albumes_rekognition', async (req, res) => {
+            try {
+                const { imagen, id_usuario } = req.body;
                 
-                // Obtener el ID del álbum recién creado
-                const id_album = results.insertId;
+                // Decodificar la imagen de base64
+                const imageBuffer = Buffer.from(imagen, 'base64');
+            
+                // Parámetros para la operación detectLabels
+                const params = {
+                  Image: {
+                    Bytes: imageBuffer
+                  },
+                  MaxLabels: 100,
+                  MinConfidence: 70
+                };
+            
+                // Llamar a la operación detectLabels de Rekognition
+                const response = await rekognition.detectLabels(params).promise();
                 
-                // Insertar la foto en el álbum
-                pool.query('INSERT INTO fotos (id_album, url_foto) VALUES (?, ?)', [id_album, imagen], (error, results, fields) => {
+                // Buscar las etiquetas que tienen "Animal" en sus padres y que tienen instancias
+                const animalLabels = response.Labels.filter(label => label.Parents.some(parent => parent.Name === 'Animal') && label.Instances.length > 0);
+                
+                // Crear un nuevo álbum para la primera etiqueta encontrada y asignarlo al usuario
+                if (animalLabels.length > 0) {
+                    const nombreAlbum = animalLabels[0].Name;
+                    pool.query('INSERT INTO albumes (nombre, id_usuario) VALUES (?, ?)', [nombreAlbum, id_usuario], (error, results, fields) => {
                     if (error) {
                         console.error('Error:', error);
-                        res.status(500).json({ mensaje: 'Error interno del servidor en asignar foto al álbum' });
+                        res.status(500).json({ mensaje: 'Error interno del servidor en crear album' });
                     } else {
-                        console.log(`Foto asignada al álbum con ID ${id_album}`);
-                        res.status(200).json({ mensaje: 'Foto asignada al álbum' });
+                        console.log(`Álbum "${nombreAlbum}" creado y asignado al usuario con ID ${id_usuario}`);
+                        
+                        // Obtener el ID del álbum recién creado
+                        const id_album = results.insertId;
+                        
+                        // Insertar la foto en el álbum
+                        pool.query('INSERT INTO fotos (id_album, url_foto) VALUES (?, ?)', [id_album, imagen], (error, results, fields) => {
+                            if (error) {
+                                console.error('Error:', error);
+                                res.status(500).json({ mensaje: 'Error interno del servidor en asignar foto al álbum' });
+                            } else {
+                                console.log(`Foto asignada al álbum con ID ${id_album}`);
+                                res.status(200).json({ mensaje: 'Foto asignada al álbum' });
+                            }
+                        });
                     }
-                });
+                    });
+                } else {
+                    res.status(200).json({ mensaje: 'No se encontraron etiquetas de animales' });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                res.status(500).json({ mensaje: 'Error interno del servidor en albumes rekognition' });
             }
-            });
-        } else {
-            res.status(200).json({ mensaje: 'No se encontraron etiquetas de animales' });
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor en albumes rekognition' });
-    }
-});
+        });
 
 
 // escuchar puerto 3000

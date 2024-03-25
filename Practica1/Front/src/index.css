@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    background: #202020;
+    color: white;
+  }
+
+.modal{
+    background: #202020;
+    color: white;
+    border: 1px solid #fff;
+    padding: 10px;
+    border-radius: 5px;
+    width: 50%;
+    margin: 0 auto;
+    margin-top: 10%;
+    text-align: center;
+}

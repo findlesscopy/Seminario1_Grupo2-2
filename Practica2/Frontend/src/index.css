@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    background: #202020;
+    color: white;
+  }
+
+.modal{
+    background: #202020;
+    color: white;
+    border: 1px solid #fff;
+    padding: 10px;
+    border-radius: 5px;
+    width: 50%;
+    margin: 0 auto;
+    margin-top: 10%;
+    text-align: center;
+}
+
+.camara-btn {
+  background-color: var(--primary-100);
+  color: var(--text-100);
+  border: none;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.camara-btn:hover {
+  background-color: var(--primary-200);
+}
+
+.camara-btn:active {
+  background-color: var(--primary-300);
+}
+
+.foto-btn {
+  background-color: var(--primary-100);
+  color: var(--text-100);
+  border: none;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.foto-btn:hover {
+  background-color: var(--primary-200);
+}
+
+.foto-btn:active {
+  background-color: var(--primary-300);
+}
+
+
+.video {
+  width: 40%;
+  height: 480px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.canvas {
+  width: 40%;
+  height: 480px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.video-container {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}

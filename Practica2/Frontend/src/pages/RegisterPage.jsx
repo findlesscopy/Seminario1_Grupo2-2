@@ -4,7 +4,6 @@ import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
 import { Card } from "../components/ui/Card";
 import { Link } from "react-router-dom";
-import Cookies from "js-cookie";
 import { API_URL } from "./url";
 
 function RegisterPage() {
@@ -39,32 +38,8 @@ function RegisterPage() {
   };
 
   const onSubmit = async (data) => {
-    console.log(previewImage.split(",")[1].length)
+    console.log(previewImage.split(",")[1].length);
     try {
-      // Subir la imagen
-      const imageResponse = await fetch(`${API_URL}/fotos-perfil`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Content-Length": `${previewImage.split(",")[1].length}`,
-        },
-        body: JSON.stringify({
-          nombre: data.username, // Utiliza el nombre de usuario del formulario
-          imagenBase64: previewImage.split(",")[1],
-          id_usuario: parseInt(Cookies.get("id_usuario")),
-        }),
-      });
-  
-      // Verifica si la imagen se subió correctamente
-      if (!imageResponse.ok) {
-        const errorData = await imageResponse.json();
-        setError("Error al subir la imagen");
-        return; // Termina la función si hay un error al subir la imagen
-      }else {
-        console.log("Imagen subida correctamente");
-      }
-  
-      // Si la imagen se subió correctamente, registra al usuario
       const userResponse = await fetch(`${API_URL}/usuarios_crear`, {
         method: "POST",
         headers: {
@@ -76,18 +51,36 @@ function RegisterPage() {
           contraseña: data.password,
         }),
       });
-  
+
       if (!userResponse.ok) {
         const errorData = await userResponse.json();
-        setError("El usuario ya existe");
+        setError("El usuario ya existe" + errorData.message);
       } else {
         // Registro exitoso
         console.log("Usuario registrado correctamente");
         const id_usuario = await userResponse.json();
-  
-        Cookies.set("id_usuario", id_usuario.id_usuario);
-        Cookies.set("username", data.username);
-        Cookies.set("nombre", data.name);
+        // Subir la imagen
+        const imageResponse = await fetch(`${API_URL}/fotos-perfil`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": `${previewImage.split(",")[1].length}`,
+          },
+          body: JSON.stringify({
+            nombre: data.username, // Utiliza el nombre de usuario del formulario
+            imagenBase64: previewImage.split(",")[1],
+            id_usuario: parseInt(id_usuario.id_usuario),
+          }),
+        });
+
+        // Verifica si la imagen se subió correctamente
+        if (!imageResponse.ok) {
+          const errorData = await imageResponse.json();
+          setError("Error al subir la imagen");
+          return; // Termina la función si hay un error al subir la imagen
+        } else {
+          console.log("Imagen subida correctamente");
+        }
       }
     } catch (error) {
       console.error("Error:", error);

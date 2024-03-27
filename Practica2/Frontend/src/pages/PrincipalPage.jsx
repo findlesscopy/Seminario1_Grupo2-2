@@ -14,6 +14,9 @@ function PrincipalPage() {
     nombre: "",
     url_foto: "",
   });
+  
+  const [descripcion, setDescripcion] = useState({texto: ""});
+
 
   useEffect(() => {
     // Realizar la solicitud GET al servidor para obtener los datos del usuario
@@ -29,7 +32,7 @@ function PrincipalPage() {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("Datos del usuario:", data);
+        //console.log("Datos del usuario:", data);
         setUsuarioActivo((prevState) => ({
           ...prevState,
           nombre: data.nombre,
@@ -39,8 +42,36 @@ function PrincipalPage() {
       .catch((error) =>
         console.error("Error al obtener datos del usuario:", error)
       );
+
+
+      fetch(`${API_URL}/descripcion`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id_usuario: parseInt(id_usuario)
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          let desc = "";
+          if(data.genero == "Male") desc += "El usuario "
+          else desc += "La usuaria "
+          desc += "tiene un rango de edad entre " + data.minimo + " y " + data.maximo + ". Se encuentra " + data.emocion + " y " + data.emocion1 + ".";
+          if (data.lentes == true) desc += " Usa lentes."
+          if (data.barba == true) desc += " Tiene barba."
+          if (data.bigote == true) desc += " Tiene bigote."
+          setDescripcion((prevState) => ({
+            ...prevState,
+            texto: desc
+          }));
+        })
+        .catch((error) =>
+  
+          console.error("Error al obtener descripcion:", error)
+        );
   }, [username]);
-  console.log("Usuario activo:", usuarioActivo);
 
   return (
     <>
@@ -66,7 +97,7 @@ function PrincipalPage() {
             <div className="col-span-3 flex flex-col justify-center items-center bg-zinc-900">
               <div className="flex flex-row justify-center items-center ">
                 <label className="text-xl font-bold mr-2">Tags:</label>
-                <h1 className="text-xl ">{usuarioActivo.nombre}</h1>
+                <h1 className="text-xl ">{descripcion.texto}</h1>
               </div>
             </div>
             <div className="col-span-3 flex flex-col justify-center items-center bg-zinc-900">

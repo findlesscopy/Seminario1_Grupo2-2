@@ -37,6 +37,7 @@ function EditPage() {
 
   useEffect(() => {
     // Realizar la solicitud GET al servidor para obtener los datos del usuario
+    console.log('id:', id_usuario);
     fetch(`${API_URL}/obtener_usuarios`, {
       method: 'POST',
       headers: {

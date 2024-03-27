@@ -1,30 +1,22 @@
 import { NavBarSimple } from "../components/NavBar";
 import { useForm } from "react-hook-form";
-import { useState, Fragment } from "react";
+import { useState } from "react";
 import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
 import { Card } from "../components/ui/Card";
 import Cookies from "js-cookie";
-import { useEffect } from "react";
 import { API_URL } from "./url";
 import { Textarea } from "@material-tailwind/react";
 
 function UploadPage() {
-  const { register, handleSubmit } = useForm();
   const [previewImage, setPreviewImage] = useState(null);
-  const [nombresAlbumes, setNombresAlbumes] = useState([
-    { name: "Seleccione un Álbum" },
-  ]);
-  const [selected, setSelected] = useState(nombresAlbumes[0]);
-
-  const username = Cookies.get("username");
+  const { register, handleSubmit } = useForm(); // Obtén la función register y handleSubmit de React Hook Form
   const id_usuario = Cookies.get("id");
 
-  const [usuarioActivo, setUsuarioActivo] = useState({
-    username: username,
-    id_usuario: id_usuario,
+  const [formData, setFormData] = useState({
     nombre: "",
-    url_foto: "",
+    descripcion: "",
+    imagen: null,
   });
 
   const handleImageChange = (event) => {
@@ -38,87 +30,32 @@ function UploadPage() {
     }
   };
 
-  const subirFoto = (event) => {
-    event.preventDefault(); // Evita que se recargue la página al hacer clic en el botón
-    const fotoName = event.target.form.fotoName.value;
-    const id_usuario = Cookies.get("id");
+  const onSubmit = async (data) => {
+    console.log(data); // Imprime los datos del formulario
+    // Resto del código para enviar la información al servidor...
     const imagen64 = previewImage.split(",")[1];
-    const nombre_album = selected.name;
+    console.log(data.nombre_foto);
+    console.log(data.descripcion);
 
-    fetch(`${API_URL}/crear_foto_albumes`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id_usuario: parseInt(id_usuario),
-        nombre: fotoName,
-        imagenBase64: imagen64,
-        nombre_album: nombre_album,
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((error) => console.error("Error al subir la foto:", error));
+    try {
+      const response = await fetch(`${API_URL}/albumes_rekognition`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id_usuario: parseInt(id_usuario),
+          imagen: imagen64,
+          nombreImagen: data.nombre_foto,
+          descripcion: data.descripcion,
+        }),
+      });
+      const res = await response.json();
+      console.log(res);
+    } catch (error) {
+      console.error("Error al subir la foto:", error);
+    }
   };
-
-  useEffect(() => {
-    // Realizar la solicitud GET al servidor para obtener los datos del usuario
-    fetch(`${API_URL}/obtener_usuarios`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username: username,
-        id_usuario: parseInt(id_usuario),
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Datos del usuario:", data);
-        setUsuarioActivo((prevState) => ({
-          ...prevState,
-          nombre: data.nombre,
-          url_foto: data.url_foto,
-        }));
-      })
-      .catch((error) =>
-        console.error("Error al obtener datos del usuario:", error)
-      );
-  }, []); // <- Array vacío significa que el efecto se ejecutará solo una vez, después del montaje del componente
-
-  useEffect(() => {
-    // Realizar la solicitud GET al servidor para obtener los datos de los albumes del usuario
-    const id_usuario = Cookies.get("id");
-    fetch(`${API_URL}/obtener_albumes`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id_usuario: parseInt(id_usuario) }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        for (let i = 0; i < data.length; i++) {
-          setNombresAlbumes((prev) => {
-            // Verificar si el nombre ya existe en el array
-            if (!prev.some((album) => album.name === data[i][1])) {
-              // Si no existe, agregarlo al array
-              return [...prev, { name: data[i][1], id: data[i][0] }];
-            } else {
-              // Si existe, devolver el array sin cambios
-              return prev;
-            }
-          });
-        }
-      })
-      .catch((error) =>
-        console.error("Error al obtener datos de los albumes:", error)
-      );
-  }, []);
 
   return (
     <>
@@ -128,27 +65,29 @@ function UploadPage() {
           <div className="col-span-5 grid grid-cols-3 gap-4">
             <h1 className="font-bold">Cargue una imagen:</h1>
             <Card>
-              <form onSubmit={subirFoto}>
+              <form onSubmit={handleSubmit(onSubmit)}>
                 <Label htmlFor="nombre_foto">Nombre de la imagen:</Label>
                 <Input
                   type="text"
                   name="nombre_foto"
                   placeholder="Nombre de la imagen"
+                  {...register("nombre_foto")} // Registra el campo de entrada con React Hook Form
                 />
                 <Label htmlFor="descripcion">Descripción:</Label>
                 <Textarea
                   name="descripcion"
                   type="text"
-                  className="bg-gray-500 w-full p-2 "
+                  className="bg-gray-500 w-full p-2"
                   rows="8"
-                  placeholder=" Escribe la descripción de la imagen"
+                  placeholder="Escribe la descripción de la imagen"
+                  {...register("descripcion")} // Registra el campo de entrada con React Hook Form
                 />
                 <Label htmlFor="image">Imagen:</Label>
                 <Input
                   type="file"
                   name="image"
                   onChange={handleImageChange}
-                  accept="image/*" // Solo permite archivos de imagen
+                  accept="image/*"
                 />
                 <Label htmlFor="image">Vista previa:</Label>
                 <div className="flex items-center justify-center borde">

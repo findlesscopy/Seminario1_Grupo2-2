@@ -996,6 +996,34 @@ async function insertarFoto(id_album, nombreImagen, imageBuffer, descripcion, re
   });
 }
 
+app.post('/obtener_texto', async (req, res) => {
+    try {
+        const { imagen } = req.body;
+        
+        // Decodificar la imagen de base64
+        const imageBuffer = Buffer.from(imagen, 'base64');
+    
+        // Parámetros para la operación detectText
+        const params = {
+            Image: {
+                Bytes: imageBuffer
+            }
+        };
+    
+        // Llamar a la operación detectText de Rekognition
+        const response = await rekognition.detectText(params).promise();
+        const textos = response.TextDetections
+            .filter(detection => detection.Type === 'WORD')
+            .map(detection => detection.DetectedText)
+            .join(' ');
+
+        console.log('Textos detectados:', textos);
+        res.status(200).json({ textos: textos });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor en obtener texto' });
+    }
+});
 
 // escuchar puerto 3000
 app.listen(3000, () => {

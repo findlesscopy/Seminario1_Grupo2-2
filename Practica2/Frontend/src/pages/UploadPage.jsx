@@ -7,11 +7,15 @@ import { Card } from "../components/ui/Card";
 import Cookies from "js-cookie";
 import { API_URL } from "./url";
 import { Textarea } from "@material-tailwind/react";
+import { ErrorModal } from "../components/ui/ErrorModal";
+import { NotificationModal } from "../components/ui/NotificacionModal";
 
 function UploadPage() {
   const [previewImage, setPreviewImage] = useState(null);
   const { register, handleSubmit } = useForm(); // Obtén la función register y handleSubmit de React Hook Form
   const id_usuario = Cookies.get("id");
+  const [notification, setNotification] = useState(null);
+  const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
     nombre: "",
@@ -34,8 +38,8 @@ function UploadPage() {
     console.log(data); // Imprime los datos del formulario
     // Resto del código para enviar la información al servidor...
     const imagen64 = previewImage.split(",")[1];
-    console.log(data.nombre_foto);
-    console.log(data.descripcion);
+    //console.log(data.nombre_foto);
+    //console.log(data.descripcion);
 
     try {
       const response = await fetch(`${API_URL}/albumes_rekognition`, {
@@ -52,8 +56,10 @@ function UploadPage() {
       });
       const res = await response.json();
       console.log(res);
+      setNotification("Imagen subida con éxito");
     } catch (error) {
       console.error("Error al subir la foto:", error);
+      setError("Error al subir la foto");
     }
   };
 
@@ -106,6 +112,15 @@ function UploadPage() {
                 </div>
               </form>
             </Card>
+            {error && (
+              <ErrorModal message={error} onClose={() => setError(null)} />
+            )}
+            {notification && (
+              <NotificationModal
+                message={notification}
+                onClose={() => setNotification(null)}
+              />
+            )}
           </div>
         </div>
       </div>

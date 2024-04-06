@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { set, useForm } from "react-hook-form";
 import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
 import { Card } from "../components/ui/Card";
 import { Link } from "react-router-dom";
 import { API_URL } from "./url";
+import { ErrorModal } from "../components/ui/ErrorModal";
+import { NotificationModal } from "../components/ui/NotificacionModal";
+import { useNavigate } from "react-router-dom";
 
 function RegisterPage() {
   const {
@@ -13,9 +16,12 @@ function RegisterPage() {
     watch,
     formState: { errors },
   } = useForm();
+
+  const navigate = useNavigate();
   const [previewImage, setPreviewImage] = useState(null);
   const [error, setError] = useState(null);
   const [passwordMismatch, setPasswordMismatch] = useState(false);
+  const [notification, setNotification] = useState(null);
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
@@ -54,7 +60,7 @@ function RegisterPage() {
 
       if (!userResponse.ok) {
         const errorData = await userResponse.json();
-        setError("El usuario ya existe" + errorData.message);
+        setError("El usuario ya existe");
       } else {
         // Registro exitoso
         console.log("Usuario registrado correctamente");
@@ -80,6 +86,10 @@ function RegisterPage() {
           return; // Termina la función si hay un error al subir la imagen
         } else {
           console.log("Imagen subida correctamente");
+          setNotification("Usuario registrado correctamente");
+          setTimeout(() => {
+            navigate("/login");
+          }, 3000);
         }
       }
     } catch (error) {
@@ -168,6 +178,12 @@ function RegisterPage() {
         </form>
       </Card>
       {error && <ErrorModal message={error} onClose={() => setError(null)} />}
+      {notification && (
+        <NotificationModal
+          message={notification}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </div>
   );
 }

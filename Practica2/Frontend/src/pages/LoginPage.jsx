@@ -6,11 +6,16 @@ import { Card } from "../components/ui/Card";
 import { Link } from "react-router-dom";
 import { API_URL } from "./url";
 import { useNavigate } from "react-router-dom";
+import { ErrorModal } from "../components/ui/ErrorModal";
+import { NotificationModal } from "../components/ui/NotificacionModal";
+
 import Cookies from "js-cookie";
 
 function LoginPage() {
   const { register, handleSubmit } = useForm();
   const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const [notification, setNotification] = useState(null);
 
   const onSubmit = async (data) => {
     try {
@@ -37,6 +42,7 @@ function LoginPage() {
       }
     } catch (error) {
       console.error('Error:', error);
+      setError('Error al iniciar sesión ' + error); ;
     }
   };
 
@@ -71,6 +77,7 @@ function LoginPage() {
         </form>
         <button className="bg-indigo-500 px-4 py-1 rounded-md my-2 disabled:bg-indigo-300" onClick={onClick}>Login por Webcam</button>
       </Card>
+      {error && <ErrorModal message={error} onClose={() => setError(null)} />}
     </div>
   );
 }

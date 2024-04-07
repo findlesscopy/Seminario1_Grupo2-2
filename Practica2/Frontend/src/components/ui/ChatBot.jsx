@@ -53,22 +53,27 @@ export function Chatbot() {
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`message ${message.sender === "user" ? "user" : "bot"}`}
+                className={`message ${
+                  message.sender === "user" ? "user" : "bot"
+                }`}
               >
                 {message.text}
               </div>
             ))}
           </div>
-          <form className="chatbot-input-form" onSubmit={handleFormSubmit}>
-            <input
-              type="text"
-              placeholder="Escribe un mensaje..."
-              value={inputMessage}
-              onChange={handleInputChange}
-            />
-            <button type="submit">Enviar</button>
-          </form>
+          <div className="chatbot-input">
+            <form className="chatbot-input-form" onSubmit={handleFormSubmit}>
+              <input
+                type="text"
+                placeholder="Escribe un mensaje..."
+                value={inputMessage}
+                onChange={handleInputChange}
+              />
+              <button type="submit">Enviar</button>
+            </form>
+          </div>
         </div>
+        
       )}
     </div>
   );

@@ -25,6 +25,69 @@ const pool = mysql.createPool({
   database: database,
 });
 
+const animales = [
+  {
+    nombre: 'Perro',
+    caracteristica: 'Lealtad',
+    informacionAdicional: 'Los perros son conocidos por ser animales leales y cariñosos. Son una de las mascotas más populares en todo el mundo debido a su capacidad para formar fuertes lazos con los humanos.',
+    habitat: 'Doméstico'
+  },
+  {
+    nombre: 'Gato',
+    caracteristica: 'Agilidad',
+    informacionAdicional: 'Los gatos son animales ágiles y flexibles. Son conocidos por su habilidad para trepar y saltar, así como por su capacidad para moverse silenciosamente.',
+    habitat: 'Doméstico'
+  },
+  {
+    nombre: 'Elefante',
+    caracteristica: 'Tamaño',
+    informacionAdicional: 'Los elefantes son los animales terrestres más grandes del mundo. Tienen una estructura social compleja y son conocidos por su inteligencia y memoria impresionantes.',
+    habitat: 'Terrestre'
+  },
+  {
+    nombre: 'León',
+    caracteristica: 'Fuerza',
+    informacionAdicional: 'Los leones son animales poderosos y majestuosos. Son los depredadores principales en su hábitat y viven en grupos sociales llamados manadas.',
+    habitat: 'Terrestre'
+  },
+  {
+    nombre: 'Tigre',
+    caracteristica: 'Agresividad',
+    informacionAdicional: 'Los tigres son animales feroces y poderosos. Son cazadores solitarios y son conocidos por su fuerza y agilidad al acechar y atrapar a sus presas.',
+    habitat: 'Terrestre'
+  },
+  {
+    nombre: 'Ballena',
+    caracteristica: 'Tamaño',
+    informacionAdicional: 'Las ballenas son los mamíferos más grandes del planeta. Viven en los océanos y son conocidas por sus impresionantes migraciones y canciones subacuáticas.',
+    habitat: 'Acuático'
+  },
+  {
+    nombre: 'Delfín',
+    caracteristica: 'Inteligencia',
+    informacionAdicional: 'Los delfines son mamíferos marinos inteligentes y sociables. Son conocidos por su capacidad para comunicarse entre sí mediante sonidos y gestos.',
+    habitat: 'Acuático'
+  },
+  {
+    nombre: 'Águila',
+    caracteristica: 'Visión aguda',
+    informacionAdicional: 'Las águilas son aves rapaces con una visión extremadamente aguda. Son cazadoras expertas y utilizan su aguda visión para localizar y capturar a sus presas.',
+    habitat: 'Aéreo'
+  },
+  {
+    nombre: 'Canguro',
+    caracteristica: 'Salto',
+    informacionAdicional: 'Los canguros son marsupiales nativos de Australia. Son conocidos por su habilidad para saltar grandes distancias y por llevar a sus crías en una bolsa ventral.',
+    habitat: 'Terrestre'
+  },
+  {
+    nombre: 'Orangután',
+    caracteristica: 'Inteligencia',
+    informacionAdicional: 'Los orangutanes son grandes simios conocidos por su inteligencia y habilidades cognitivas. Son capaces de utilizar herramientas y tienen una estructura social compleja.',
+    habitat: 'Terrestre'
+  }
+];
+
 AWS.config.update({
   region: region,
   accessKeyId: acceskeyid,
@@ -1071,6 +1134,67 @@ app.post('/obtener_mensaje_bot', async (req, res) => {
 
     const newSessionId = response.sessionId;
     const sessionState = response.sessionState?.dialogAction?.type || '';
+
+    res.status(200).json({ content, newSessionId, sessionState });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor en obtener mensaje del bot' });
+  }
+});
+
+app.post('/obtener_mensaje_bot', async (req, res) => {
+  try {
+    const { message, sessionId } = req.body;
+
+    const lexClient = new AWS.LexRuntimeV2({
+      accessKeyId: process.env.ACCESS_KEY_ID,
+      secretAccessKey: process.env.SECRET_ACCESS_KEY,
+      region: process.env.REGION
+    });
+
+    const params = {
+      botId: process.env.BOT_ID,
+      botAliasId: process.env.BOT_ALIAS_ID,
+      localeId: 'es_419',
+      sessionId: sessionId,
+      text: message
+    };
+
+    const response = await lexClient.recognizeText(params).promise();
+
+    let content = "";
+
+    if (!response.messages) {
+      content = "No se ha podido obtener una respuesta del bot.";
+    } else {
+      content = response.messages[0].content;
+    }
+
+    const newSessionId = response.sessionId;
+    const sessionState = response.sessionState?.dialogAction?.type || '';
+    const intentName = response['sessionState']['intent']['name'];
+
+    if (sessionState === 'Close') {
+      if (intentName === 'InfoAnimales') {
+        const animalName = content.toLowerCase();
+        const animal = animales.find(a => a.nombre.toLowerCase() === animalName);
+        
+        if (animal) {
+          content = animal.informacionAdicional;
+        } else {
+          content = "Lo siento, no tengo información sobre ese animal.";
+        }
+      } else if (intentName === 'habitatAnimales') {
+        const animalName = content.toLowerCase();
+        const animal = animales.find(a => a.nombre.toLowerCase() === animalName);
+        
+        if (animal) {
+          content = animal.habitat;
+        } else {
+          content = "Lo siento, no tengo información sobre ese animal.";
+        }
+      }
+    }
 
     res.status(200).json({ content, newSessionId, sessionState });
   } catch (error) {

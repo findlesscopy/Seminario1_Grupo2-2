@@ -38,6 +38,7 @@ const nombreBucket = "practica2-g2-imagenes-b";
 
 // Create an Express app
 const app = express();
+const transalte = new AWS.Translate();
 
 app.use(BodyParser.json({ limit: "50mb" }));
 app.use(BodyParser.urlencoded({ extended: true, limit: "50mb" }));
@@ -1023,6 +1024,23 @@ app.post('/obtener_texto', async (req, res) => {
         console.error('Error:', error);
         res.status(500).json({ mensaje: 'Error interno del servidor en obtener texto' });
     }
+});
+
+app.post('/traducir', async (req, res) => {
+  const { texto, idioma } = req.body;
+  const params = {
+    SourceLanguageCode: 'auto',
+    TargetLanguageCode: idioma,
+    Text: texto
+  };
+  transalte.translateText(params, (err, data) => {
+    if (err) {
+      console.error('Error:', err);
+      res.status(500).json({ mensaje: 'Error interno del servidor al traducir' });
+    } else {
+      res.status(200).json({ traduccion: data.TranslatedText });
+    }
+  });
 });
 
 // escuchar puerto 3000

@@ -1,8 +1,8 @@
 import { NavBarSimple } from "../components/NavBar";
-import { Footer } from "../components/Footer";
 import Cookies from "js-cookie";
 import { API_URL } from "./url";
 import { useEffect, useState } from "react";
+import { Chatbot } from "../components/ui/ChatBot";
 
 function PrincipalPage() {
   const username = Cookies.get("username");
@@ -109,6 +109,7 @@ function PrincipalPage() {
             </div>
           </div>
         </div>
+        <Chatbot/>
       </div>
     </>
   );

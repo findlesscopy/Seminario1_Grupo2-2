@@ -115,11 +115,13 @@ body {
   background-color: white;
   border: 1px solid #ccc;
   border-radius: 5px;
-  overflow-y: scroll;
+  
 }
 
 .chatbot-messages {
   padding: 10px;
+  height: 345px;
+  overflow-y: scroll;
 }
 
 .message {
@@ -129,10 +131,12 @@ body {
 
 .user {
   text-align: right;
+  background-color: aqua;
 }
 
 .bot {
   text-align: left;
+  background-color: beige;
 }
 
 .chatbot-input-form {
@@ -152,6 +156,7 @@ body {
   border: 1px solid #ccc;
   border-radius: 3px;
   color: black;
+
 }
 
 .chatbot-input-form button {

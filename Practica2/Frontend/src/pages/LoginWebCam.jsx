@@ -1,68 +1,85 @@
 import React, { useRef, useState } from "react";
 import { Label } from "../components/ui/Label";
 import { Card } from "../components/ui/Card";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Input } from "../components/ui/Input";
 import { API_URL } from "./url";
-import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
+import { ErrorModal } from "../components/ui/ErrorModal";
 
 function App() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const usernameRef = useRef(null); // Referencia para el campo de entrada de usuario
-  const [base64Image, setBase64Image] = useState(null);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const startCamera = async () => {
-    const constraints = { video: true };
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    videoRef.current.srcObject = stream;
-    videoRef.current.play();
+    try {
+      const constraints = { video: true };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      videoRef.current.srcObject = stream;
+      videoRef.current.play();
+    } catch (error) {
+      console.error("Error al iniciar la cámara:", error);
+    }
   };
 
-  const takePhoto = async () => {
-    const context = canvasRef.current.getContext("2d");
-    context.drawImage(
-      videoRef.current,
-      0,
-      0,
-      canvasRef.current.width,
-      canvasRef.current.height
-    );
-    const base64String = canvasRef.current.toDataURL("image/png").split(",")[1];
-    setBase64Image(base64String);
-      // apagar la camara
+  const stopCamera = () => {
     const stream = videoRef.current.srcObject;
     const tracks = stream.getTracks();
     tracks.forEach((track) => {
       track.stop();
-    }
-    );
-    // Obtener el valor del campo de entrada de usuario
-    const username = usernameRef.current.value;
-    console.log("Username:", username);
-    console.log("Base64:", base64String);
-    const response = await fetch(`${API_URL}/reconocimiento_facial`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        imagen: base64String,
-        username: username,
-      }),
     });
-    if (response.ok) {
-      const responseData = await response.json();
-      console.log(responseData);
-      if (responseData.EsLaMismaPersona) {
-        Cookies.set("id", responseData.id_usuario);
-        Cookies.set("username", username);
-        navigate("/principal");
-      }else{
-        alert("No se reconoció la cara");
+  };
+
+  const takePhoto = async () => {
+    try {
+      const context = canvasRef.current.getContext("2d");
+      
+      context.drawImage(
+        videoRef.current,
+        0,
+        0,
+        canvasRef.current.width,
+        canvasRef.current.height
+        
+      );
+      const base64String = canvasRef.current.toDataURL("image/png").split(",")[1];
+
+      // Obtener el valor del campo de entrada de usuario
+      const username = usernameRef.current.value;
+
+      const response = await fetch(`${API_URL}/reconocimiento_facial`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          imagen: base64String,
+          username: username,
+        }),
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log(responseData);
+        if (responseData.EsLaMismaPersona) {
+          Cookies.set("id", responseData.id_usuario);
+          Cookies.set("username", username);
+          navigate("/principal");
+        } else {
+          setError("No se ha podido reconocer la cara");
+        }
+      } else {
+        setError("No se ha podido reconocer la cara");
       }
+
+      // Detener la cámara
+      stopCamera();
+    } catch (error) {
+      console.error("Error al tomar la foto:", error);
+      setError("Error al tomar la foto");
     }
   };
 
@@ -73,7 +90,7 @@ function App() {
           <video className="video" ref={videoRef} width="400" height="400" />
           <canvas className="canvas" ref={canvasRef} width="400" height="400" />
         </div>
-        <br></br>
+        <br />
         <Card>
           <h1 className="text-2xl font-bold">Login</h1>
 
@@ -87,6 +104,9 @@ function App() {
           <Link className="text-xs block my-1 text-slate-300" to="/register">
             ¿No tienes cuenta? Registrate
           </Link>
+          <Link className="text-xs block my-1 text-slate-300" to="/login">
+            Login normal
+          </Link>
           <button className="bg-indigo-500 px-4 py-1 rounded-md my-2 disabled:bg-indigo-300 mx-2" onClick={startCamera}>
             Iniciar cámara
           </button>
@@ -94,6 +114,7 @@ function App() {
             Log in
           </button>
         </Card>
+        {error && <ErrorModal message={error} onClose={() => setError(null)} />}
       </center>
     </div>
   );

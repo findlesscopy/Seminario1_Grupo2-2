@@ -1043,6 +1043,42 @@ app.post('/traducir', async (req, res) => {
   });
 });
 
+app.post('/obtener_mensaje_bot', async (req, res) => {
+  try {
+    const { message, sessionId } = req.body;
+
+    const lexClient = new AWS.LexRuntimeV2({
+      accessKeyId: process.env.ACCESS_KEY_ID,
+      secretAccessKey: process.env.SECRET_ACCESS_KEY,
+      region: process.env.REGION
+    });
+
+    const params = {
+      botId: process.env.BOT_ID,
+      botAliasId: process.env.BOT_ALIAS_ID,
+      localeId: 'es_419',
+      sessionId: sessionId,
+      text: message
+    };
+
+    const response = await lexClient.recognizeText(params).promise();
+
+    if (!response.messages) {
+      content = "No se ha podido obtener una respuesta del bot.";
+    } else {
+      content = response.messages[0].content;
+    }
+
+    const newSessionId = response.sessionId;
+    const sessionState = response.sessionState?.dialogAction?.type || '';
+
+    res.status(200).json({ content, newSessionId, sessionState });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor en obtener mensaje del bot' });
+  }
+});
+
 // escuchar puerto 3000
 app.listen(3000, () => {
   console.log("Server is running on port 3000");

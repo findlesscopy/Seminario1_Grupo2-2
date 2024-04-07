@@ -1,5 +1,5 @@
 CREATE DATABASE IF NOT EXISTS semi;
-USE semi;
+
 -- Tabla Usuarios
 CREATE TABLE Usuarios (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
@@ -35,5 +35,3 @@ CREATE TABLE Fotos_perfil (
     FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario),
     FOREIGN KEY (id_foto) REFERENCES Fotos(id_foto)
 );
-
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '1234';

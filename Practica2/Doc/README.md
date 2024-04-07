@@ -49,6 +49,7 @@ Este grupo de acceso a un usuario para poder configurar la base de datos.
 
 ![Grupo RDS](Images/grupords.png)
 ![Usuario RDS](Images/rds-usuario.png)
+![Modelo ER](Images/mer.png)
 
 ### EC2
 
@@ -100,6 +101,9 @@ Se puede preguntar acerca de algunos animales para conseguir información sobre 
 
 ### Reservación al Museo de Historia Natural
 Se puede hacer reservación de un cupo para entrar al museo nacional de Historia Natural. 
+
+### Buscar el habitat de un animal
+Se puede preguntar acerca de el habitat de algunos animales.
 
 ## Funcionalidades Amazon Rekognition
 1. Se puede realizar login utilizando reconocimiento facial.

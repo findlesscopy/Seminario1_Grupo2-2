@@ -1130,44 +1130,6 @@ app.post('/obtener_mensaje_bot', async (req, res) => {
 
     const response = await lexClient.recognizeText(params).promise();
 
-    if (!response.messages) {
-      content = "No se ha podido obtener una respuesta del bot.";
-    } else {
-      content = response.messages[0].content;
-    }
-
-    const newSessionId = response.sessionId;
-    const sessionState = response.sessionState?.dialogAction?.type || '';
-
-    console.log('Mensaje del bot:', content);
-    res.status(200).json({ mensaje: content, nueva_sesion: newSessionId, estado_session: sessionState });
-    
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ mensaje: 'Error interno del servidor en obtener mensaje del bot' });
-  }
-});
-
-app.post('/obtener_mensaje_bot', async (req, res) => {
-  try {
-    const { message, sessionId } = req.body;
-
-    const lexClient = new AWS.LexRuntimeV2({
-      accessKeyId: process.env.ACCESS_KEY_ID,
-      secretAccessKey: process.env.SECRET_ACCESS_KEY,
-      region: process.env.REGION
-    });
-
-    const params = {
-      botId: process.env.BOT_ID,
-      botAliasId: process.env.BOT_ALIAS_ID,
-      localeId: 'es_419',
-      sessionId: sessionId,
-      text: message
-    };
-
-    const response = await lexClient.recognizeText(params).promise();
-
     let content = "";
 
     if (!response.messages) {
@@ -1179,12 +1141,13 @@ app.post('/obtener_mensaje_bot', async (req, res) => {
     const newSessionId = response.sessionId;
     const sessionState = response.sessionState?.dialogAction?.type || '';
     const intentName = response['sessionState']['intent']['name'];
-
+    console.log('intentName:', intentName);
     if (sessionState === 'Close') {
+      console.log('Intent:', intentName);
       if (intentName === 'InfoAnimales') {
         const animalName = content.toLowerCase();
         const animal = animales.find(a => a.nombre.toLowerCase() === animalName);
-        
+        console.log(animal);
         if (animal) {
           content = animal.informacionAdicional;
         } else {
@@ -1194,6 +1157,7 @@ app.post('/obtener_mensaje_bot', async (req, res) => {
         const animalName = content.toLowerCase();
         const animal = animales.find(a => a.nombre.toLowerCase() === animalName);
         
+       
         if (animal) {
           content = animal.habitat;
         } else {
@@ -1202,7 +1166,7 @@ app.post('/obtener_mensaje_bot', async (req, res) => {
       }
     }
 
-    res.status(200).json({ content, newSessionId, sessionState });
+    res.status(200).json({ mensaje: content, nueva_sesion: newSessionId, estado_session: sessionState  });
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ mensaje: 'Error interno del servidor en obtener mensaje del bot' });

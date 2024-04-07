@@ -11,7 +11,6 @@ export function Chatbot() {
   // Función para enviar un mensaje al bot
   const sendMessage = async () => {
     if (inputMessage.trim() !== "") {
-
       setMessages((prevMessages) => [
         ...prevMessages,
         { text: inputMessage, sender: "user" },
@@ -25,28 +24,18 @@ export function Chatbot() {
           },
           body: JSON.stringify({
             message: inputMessage,
-            sessionId: 'id-'+id_usuario,
+            sessionId: "id-" + id_usuario,
           }),
         });
 
         const data = await response.json();
         console.log(data);
 
-        if(data.estado_session == 'Close'){
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            { text: "La conversación ha finalizado", sender: "bot" },
-          ]);
-          setInputMessage("");
-          return;
-        }else{
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            { text: data.mensaje, sender: "bot" },
-          ]);
-          setInputMessage("");
-        }
-        
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { text: data.mensaje, sender: "bot" },
+        ]);
+        setInputMessage("");
       } catch (error) {
         console.error("Error al enviar mensaje al bot:", error);
       }

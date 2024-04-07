@@ -81,7 +81,7 @@ function EditPage() {
       .then((response) => response.json())
       .then((data) => {
         //console.log("Contraseña correcta:", data);
-        if (data.ok) {
+        if (data) {
           setNotification("Contraseña correcta");
           setContraseniaValidada(true);
         } else {

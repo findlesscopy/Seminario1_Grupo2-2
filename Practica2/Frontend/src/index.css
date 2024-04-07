@@ -131,10 +131,12 @@ body {
 
 .user {
   text-align: right;
+  background-color: aqua;
 }
 
 .bot {
   text-align: left;
+  background-color: beige;
 }
 
 .chatbot-input-form {

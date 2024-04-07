@@ -1,25 +1,55 @@
 import React, { useState } from "react";
+import Cookies from "js-cookie";
+import { API_URL } from "../../pages/url";
 
 export function Chatbot() {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [chatOpen, setChatOpen] = useState(false); // Estado para controlar si el chat está abierto o cerrado
+  const id_usuario = Cookies.get("id");
 
   // Función para enviar un mensaje al bot
   const sendMessage = async () => {
     if (inputMessage.trim() !== "") {
-      // Agregar el mensaje enviado por el usuario a la lista de mensajes
-      setMessages([...messages, { text: inputMessage, sender: "user" }]);
+
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { text: inputMessage, sender: "user" },
+      ]);
       // Enviar el mensaje al servicio de Amazon Lex
       try {
-        const response = await sendMessageToLex(inputMessage);
-        // Agregar la respuesta del bot a la lista de mensajes
-        setMessages([...messages, { text: response, sender: "bot" }]);
+        const response = await fetch(`${API_URL}/obtener_mensaje_bot`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: inputMessage,
+            sessionId: 'id-'+id_usuario,
+          }),
+        });
+
+        const data = await response.json();
+        console.log(data);
+
+        if(data.estado_session == 'Close'){
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            { text: "La conversación ha finalizado", sender: "bot" },
+          ]);
+          setInputMessage("");
+          return;
+        }else{
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            { text: data.mensaje, sender: "bot" },
+          ]);
+          setInputMessage("");
+        }
+        
       } catch (error) {
         console.error("Error al enviar mensaje al bot:", error);
       }
-      // Limpiar el campo de entrada después de enviar el mensaje
-      setInputMessage("");
     }
   };
 
@@ -73,7 +103,6 @@ export function Chatbot() {
             </form>
           </div>
         </div>
-        
       )}
     </div>
   );

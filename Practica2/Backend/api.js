@@ -16,6 +16,10 @@ const database = process.env.DB_DATABASE;
 const region = process.env.REGION;
 const acceskeyid = process.env.ACCESS_KEY_ID;
 const secretaccesskey = process.env.SECRET_ACCESS_KEY;
+const bot_access_key = process.env.BOT_ACCESS_KEY_ID
+const bot_secret_access_key = process.env.BOT_SECRET_ACCESS_KEY
+const bot_id = process.env.BOT_ID
+const bot_alias_id = process.env.BOT_ALIAS_ID
 
 // Create a connection pool to the RDS MySQL database
 const pool = mysql.createPool({
@@ -1048,14 +1052,14 @@ app.post('/obtener_mensaje_bot', async (req, res) => {
     const { message, sessionId } = req.body;
 
     const lexClient = new AWS.LexRuntimeV2({
-      accessKeyId: process.env.ACCESS_KEY_ID,
-      secretAccessKey: process.env.SECRET_ACCESS_KEY,
-      region: process.env.REGION
+      accessKeyId: bot_access_key,
+      secretAccessKey: bot_secret_access_key,
+      region: region
     });
-
+    
     const params = {
-      botId: process.env.BOT_ID,
-      botAliasId: process.env.BOT_ALIAS_ID,
+      botId: bot_id,
+      botAliasId: bot_alias_id,
       localeId: 'es_419',
       sessionId: sessionId,
       text: message
@@ -1072,7 +1076,9 @@ app.post('/obtener_mensaje_bot', async (req, res) => {
     const newSessionId = response.sessionId;
     const sessionState = response.sessionState?.dialogAction?.type || '';
 
-    res.status(200).json({ content, newSessionId, sessionState });
+    console.log('Mensaje del bot:', content);
+    res.status(200).json({ mensaje: content, nueva_sesion: newSessionId, estado_session: sessionState });
+    
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ mensaje: 'Error interno del servidor en obtener mensaje del bot' });

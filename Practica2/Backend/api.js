@@ -1,92 +1,114 @@
-const dotenv = require('dotenv');
-const BodyParser = require('body-parser');
-const express = require('express');
-const mysql = require('mysql');
-const AWS = require('aws-sdk');
-const AWSCOGNITO = require('aws-sdk');
-const AmazonCognitoIdentity = require('amazon-cognito-identity-js');
-const cors = require('cors'); // Importa el paquete CORS
-const fs = require('fs');
-const bcrypt = require('bcrypt');
+const dotenv = require("dotenv");
+const BodyParser = require("body-parser");
+const express = require("express");
+const mysql = require("mysql");
+const AWS = require("aws-sdk");
+const cors = require("cors"); // Importa el paquete CORS
+const fs = require("fs");
+const bcrypt = require("bcrypt");
 const nombresDeUsuario = new Set();
 
 dotenv.config();
-const cliente_cognito = process.env.CLIENTE_COGNITO;
-const region_cognito = process.env.REGION_COGNITO;
 const host = process.env.DB_HOST;
 const user = process.env.DB_USER;
 const password = process.env.DB_PASSWORD;
 const database = process.env.DB_DATABASE;
 const region = process.env.REGION;
-const acceskeyid = process.env.AWS_ACCESS_KEY_ID_S3;
-const secretaccesskey = process.env.AWS_SECRET_ACCESS_KEY_S3;
-const acceskeyidRekognition = process.env.AWS_ACCESS_KEY_IDR;
-const secretaccesskeyRekognition = process.env.AWS_SECRET_ACCESS_KEYR;
-const acceskeyidSNS = process.env.AWS_ACCESS_KEY_ID_SNS;
-const secretaccesskeySNS = process.env.AWS_SECRET_ACCESS_KEY_SNS;
-const acceskeyidCognito = process.env.AWS_ACCESS_KEY_ID_COGNITO;
-const secretaccesskeyCognito = process.env.AWS_SECRET_ACCESS_KEY_COGNITO;
+const acceskeyid = process.env.ACCESS_KEY_ID;
+const secretaccesskey = process.env.SECRET_ACCESS_KEY;
+const bot_access_key = process.env.BOT_ACCESS_KEY_ID
+const bot_secret_access_key = process.env.BOT_SECRET_ACCESS_KEY
+const bot_id = process.env.BOT_ID
+const bot_alias_id = process.env.BOT_ALIAS_ID
 
 // Create a connection pool to the RDS MySQL database
 const pool = mysql.createPool({
-    host: host,
-    user: user,
-    password: password,
-    database: database,
+  host: host,
+  user: user,
+  password: password,
+  database: database,
 });
 
+const animales = [
+  {
+    nombre: 'Perro',
+    caracteristica: 'Lealtad',
+    informacionAdicional: 'Los perros son conocidos por ser animales leales y cariñosos. Son una de las mascotas más populares en todo el mundo debido a su capacidad para formar fuertes lazos con los humanos.',
+    habitat: 'Doméstico'
+  },
+  {
+    nombre: 'Gato',
+    caracteristica: 'Agilidad',
+    informacionAdicional: 'Los gatos son animales ágiles y flexibles. Son conocidos por su habilidad para trepar y saltar, así como por su capacidad para moverse silenciosamente.',
+    habitat: 'Doméstico'
+  },
+  {
+    nombre: 'Elefante',
+    caracteristica: 'Tamaño',
+    informacionAdicional: 'Los elefantes son los animales terrestres más grandes del mundo. Tienen una estructura social compleja y son conocidos por su inteligencia y memoria impresionantes.',
+    habitat: 'Terrestre'
+  },
+  {
+    nombre: 'León',
+    caracteristica: 'Fuerza',
+    informacionAdicional: 'Los leones son animales poderosos y majestuosos. Son los depredadores principales en su hábitat y viven en grupos sociales llamados manadas.',
+    habitat: 'Terrestre'
+  },
+  {
+    nombre: 'Tigre',
+    caracteristica: 'Agresividad',
+    informacionAdicional: 'Los tigres son animales feroces y poderosos. Son cazadores solitarios y son conocidos por su fuerza y agilidad al acechar y atrapar a sus presas.',
+    habitat: 'Terrestre'
+  },
+  {
+    nombre: 'Ballena',
+    caracteristica: 'Tamaño',
+    informacionAdicional: 'Las ballenas son los mamíferos más grandes del planeta. Viven en los océanos y son conocidas por sus impresionantes migraciones y canciones subacuáticas.',
+    habitat: 'Acuático'
+  },
+  {
+    nombre: 'Delfín',
+    caracteristica: 'Inteligencia',
+    informacionAdicional: 'Los delfines son mamíferos marinos inteligentes y sociables. Son conocidos por su capacidad para comunicarse entre sí mediante sonidos y gestos.',
+    habitat: 'Acuático'
+  },
+  {
+    nombre: 'Águila',
+    caracteristica: 'Visión aguda',
+    informacionAdicional: 'Las águilas son aves rapaces con una visión extremadamente aguda. Son cazadoras expertas y utilizan su aguda visión para localizar y capturar a sus presas.',
+    habitat: 'Aéreo'
+  },
+  {
+    nombre: 'Canguro',
+    caracteristica: 'Salto',
+    informacionAdicional: 'Los canguros son marsupiales nativos de Australia. Son conocidos por su habilidad para saltar grandes distancias y por llevar a sus crías en una bolsa ventral.',
+    habitat: 'Terrestre'
+  },
+  {
+    nombre: 'Orangután',
+    caracteristica: 'Inteligencia',
+    informacionAdicional: 'Los orangutanes son grandes simios conocidos por su inteligencia y habilidades cognitivas. Son capaces de utilizar herramientas y tienen una estructura social compleja.',
+    habitat: 'Terrestre'
+  }
+];
 
-// Crea un nuevo cliente de Rekognition con sus propias credenciales
-const rekognitionUser = new AWS.Rekognition({
-    region: region,
-    accessKeyId: acceskeyidRekognition,
-    secretAccessKey: secretaccesskeyRekognition,
+AWS.config.update({
+  region: region,
+  accessKeyId: acceskeyid,
+  secretAccessKey: secretaccesskey,
 });
 
-const s3Rekognition = new AWS.S3({
-    region: region,
-    accessKeyId: acceskeyidRekognition,
-    secretAccessKey: secretaccesskeyRekognition,
-});
+const rekognition = new AWS.Rekognition();
 
-const s3 = new AWS.S3({
-    region: region,
-    accessKeyId: acceskeyid,
-    secretAccessKey: secretaccesskey,
-});
-
-AWSCOGNITO.config.update({
-    region: region,
-    accessKeyId: acceskeyidCognito,
-    secretAccessKey: secretaccesskeyCognito,
-});
-
-const cognitoISP = new AWSCOGNITO.CognitoIdentityServiceProvider();
-
-
-const nombreBucket = 'usuarios-fithub';
-
-const sns = new AWS.SNS({
-    region: region,
-    accessKeyId: acceskeyidSNS,
-    secretAccessKey: secretaccesskeySNS,
-});
-
-const poolData =  {
-    UserPoolId: region_cognito,
-    ClientId: cliente_cognito
-};
-
-
-const cognito = new AmazonCognitoIdentity.CognitoUserPool(poolData);
-
+const s3 = new AWS.S3();
+const nombreBucket = "practica2-g2-imagenes-b";
 
 // Create an Express app
 const app = express();
+const transalte = new AWS.Translate();
 
-
-app.use(BodyParser.json({ limit: '50mb' }));
-app.use(BodyParser.urlencoded({ extended: true, limit: '50mb' }));
+app.use(BodyParser.json({ limit: "50mb" }));
+app.use(BodyParser.urlencoded({ extended: true, limit: "50mb" }));
 
 // Middleware to parse JSON bodies
 app.use(express.json());
@@ -95,651 +117,1063 @@ app.use(express.json());
 app.use(cors());
 
 //Check
-app.get('/check', (req, res) => {
-    res.status(200).json({ message: 'Server is running' });
+app.get("/check", (req, res) => {
+  res.status(200).json({ message: "Server is running" });
 });
-
 
 // Agregar un nuevo usuario
-app.post('/register', (req, res) => {
-    try{
-        const { nombre, apellido, correo, contraseña, peso, altura, foto, nivel } = req.body;
+app.post("/usuarios_crear", (req, res) => {
+  try {
+    const { username, nombre, contraseña } = req.body;
 
-        var attributeslist = [];
-        var dataEmail = {
-            Name: 'email',
-            Value: correo
+    // Verifica si el nombre de usuario ya existe
+    if (nombresDeUsuario.has(username)) {
+      // Si el nombre de usuario ya existe, devuelve un mensaje de error
+      return res
+        .status(400)
+        .json({ error: "El nombre de usuario ya está en uso" });
+    }
+
+    // Genera un hash de la contraseña
+    bcrypt.hash(contraseña, 10, (err, hash) => {
+      if (err) {
+        console.error("Error al encriptar la contraseña:", err);
+        res.status(500).json({ error: "Error al crear usuario" });
+        return;
+      }
+      // Inserta el usuario en la base de datos con la contraseña encriptada
+      pool.query(
+        "INSERT INTO Usuarios (username, nombre, contraseña) VALUES (?, ?, ?)",
+        [username, nombre, hash],
+        (error, results, fields) => {
+          if (error) {
+            console.error(error);
+            res.status(500).json({ error: "Error al crear usuario1" });
+            return;
+          }
+          // Si el nombre de usuario no existe, agrega el nombre de usuario al conjunto
+          nombresDeUsuario.add(username);
+          res
+            .status(200)
+            .json({
+              message: "Usuario creado exitosamente",
+              id_usuario: results.insertId,
+            });
+        }
+      );
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error interno del servidor en usuarios crear" });
+  }
+});
+
+//inicio de sesion
+app.post("/credenciales", (req, res) => {
+  try {
+    const { username, contraseña } = req.body;
+
+    // Busca el usuario en la base de datos por su nombre de usuario
+    pool.query(
+      "SELECT * FROM Usuarios WHERE username = ?",
+      [username],
+      (error, results, fields) => {
+        if (error) {
+          console.error(error);
+          res.status(500).json({ error: "Error al iniciar sesión" });
+          return;
+        }
+
+        // Si no se encuentra el usuario
+        if (results.length === 0) {
+          res
+            .status(401)
+            .json({ error: "Nombre de usuario o contraseña incorrectos" });
+          return;
+        }
+
+        // Compara la contraseña proporcionada con la contraseña encriptada almacenada en la base de datos
+        bcrypt.compare(contraseña, results[0].contraseña, (err, resultado) => {
+          if (err) {
+            //console.error('Error al comparar contraseñas:', err);
+            res.status(500).json({ error: "Error al iniciar sesión" });
+            return;
+          }
+          if (resultado) {
+            // Si las contraseñas coinciden, el inicio de sesión es exitoso
+            pool.query(
+              "SELECT id_usuario FROM Usuarios WHERE username = ?",
+              [username],
+              (error, results, fields) => {
+                if (error) {
+                  console.error(error);
+                  res.status(500).json({ error: "Error al obtener usuario" });
+                  return;
+                }
+                res
+                  .status(200)
+                  .json({
+                    message: "Inicio de sesión exitoso",
+                    id_usuario: results[0].id_usuario,
+                  });
+              }
+            );
+          } else {
+            // Si las contraseñas no coinciden, el inicio de sesión falla
+            res
+              .status(401)
+              .json({ error: "Nombre de usuario o contraseña incorrectos" });
+          }
+        });
+      }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error interno del servidor en credenciales" });
+  }
+});
+
+// Validar contraseña
+app.post("/validar-contrasena", (req, res) => {
+  try {
+    const { id_usuario, contraseña } = req.body;
+    pool.query(
+      "SELECT contraseña FROM Usuarios WHERE id_usuario = ?",
+      [id_usuario],
+      (error, results, fields) => {
+        if (error) {
+          console.error(error);
+          res.status(500).json({ error: "Error al obtener contraseña" });
+          return;
+        }
+        bcrypt.compare(contraseña, results[0].contraseña, (err, resultado) => {
+          if (err) {
+            console.error("Error al comparar contraseñas:", err);
+            res.status(500).json({ error: "Error al validar contraseña" });
+            return;
+          }
+          if (resultado) {
+            res.status(200).json({ message: "Contraseña válida" });
+          } else {
+            res.status(401).json({ error: "Contraseña inválida" });
+          }
+        });
+      }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error interno del servidor en validar contraseña" });
+  }
+});
+
+//Subir foto de perfil por usuario nuevo
+app.post("/fotos-perfil", (req, res) => {
+  try {
+    const { nombre, imagenBase64, id_usuario } = req.body;
+    const imagenBuffer = Buffer.from(imagenBase64, "base64");
+
+    // Realiza la consulta para contar el número de fotos de perfil del usuario
+    pool.query(
+      "SELECT COUNT(*) FROM fotos_perfil WHERE id_usuario = ?",
+      [id_usuario],
+      (error, results, fields) => {
+        if (error) {
+          console.error(error);
+          res.status(500).json({ error: "Error al obtener fotos de perfil" });
+          return;
+        }
+        const cantidad = results[0]["COUNT(*)"];
+
+        // Nombre que deseas darle a la foto en S3
+        const nombreFotoEnS3 = "Fotos_Perfil/" + nombre + cantidad;
+
+        const params = {
+          Bucket: nombreBucket,
+          Key: nombreFotoEnS3,
+          Body: imagenBuffer,
+          ContentType: "image/jpeg", // Tipo de contenido de la imagen
         };
-        var attributeEmail = new AmazonCognitoIdentity.CognitoUserAttribute(dataEmail);
-        attributeslist.push(attributeEmail);
 
-        try{
-            bcrypt.hash(contraseña, 10, (err, hash) => {
-                if (err) {
-                    console.error('Error al encriptar la contraseña:', err);
-                    res.status(500).json({ error: 'Error al crear usuario' });
-                    return;
-                }
-                cognito.signUp(correo, hash, attributeslist, null, async (err, data) =>{
-                    if(err){
-                        console.error('Error al crear el usuario en cognito:', err);
-                        res.status(500).json({ error: 'Error al crear usuario' });
-                        return;
-                    }
-                });
-            });
-            
-        }catch(error){
-            console.error('Error:', error);
-            res.status(500).json({ mensaje: 'Error interno del servidor en enviar confirmacion de correo' });
-        }
+        // Sube la foto a S3
+        s3.upload(params, (err, data) => {
+          if (err) {
+            console.error("Error al subir la foto a S3:", err);
+            res.status(500).json({ error: "Error al subir la foto a S3" });
+            return;
+          }
 
-        const imagenBuffer = Buffer.from(foto, 'base64');
-        
-        // Crear un nuevo objeto de fecha con la fecha y hora actual
-        var fechaHoy = new Date();
+          console.log("Foto subida correctamente a S3:", data.Location);
 
-        // Obtener el día, mes y año de la fecha de hoy
-        var dia = fechaHoy.getDate();
-        var mes = fechaHoy.getMonth() + 1; // Los meses van de 0 a 11, por lo que sumamos 1
-        var año = fechaHoy.getFullYear();
+          // URL de la foto en S3
+          const url = data.Location;
 
-        // Obtener la hora y los minutos de la fecha de hoy
-        var hora = fechaHoy.getHours();
-        var minutos = fechaHoy.getMinutes();
-
-        // Formatear la fecha y hora en el formato deseado (por ejemplo, dd/mm/aaaa hh:mm)
-        const fechaHoraFormateada = año + '-' + mes + '-' + dia;
-        
-        const nombreFotoEnS3 = "Fotos_Perfil/" + nombre;
-
-            const params = {
-                Bucket: nombreBucket,
-                Key: nombreFotoEnS3,
-                Body: imagenBuffer,
-                ContentType: 'image/jpeg' // Tipo de contenido de la imagen
-            };
-
-            // Sube la foto a S3
-            s3.upload(params, (err, data) => {
-                if (err) {
-                    console.error('Error al subir la foto a S3:', err);
-                    res.status(500).json({ error: 'Error al subir la foto a S3' });
-                    return;
-                }
-
-                console.log('Foto subida correctamente a S3:', data.Location);
-
-                // URL de la foto en S3
-                const url = data.Location;
-
-                // Genera un hash de la contraseña
-                bcrypt.hash(contraseña, 10, (err, hash) => {
-                    if (err) {
-                        console.error('Error al encriptar la contraseña:', err);
-                        res.status(500).json({ error: 'Error al crear usuario' });
-                        return;
-                    }
-                    //console.log(nombre, apellido, correo, hash, fechaHoraFormateada, peso, altura,url)
-                    // Inserta el usuario en la base de datos con la contraseña encriptada
-                    pool.query('INSERT INTO usuarios (Nombre, Apellido, CorreoElectronico, Pass, FechaRegistro, Peso, Altura, FotoPerfil, Nivel) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [nombre, apellido, correo, hash, fechaHoraFormateada, peso, altura, url, nivel], (error, results, fields) => {
-                        if (error) {
-                            console.error(error);
-                            res.status(500).json({ error: 'Error al crear usuario' });
-                            return;
-                        }
-                        // Si el nombre de usuario no existe, agrega el nombre de usuario al conjunto
-                        nombresDeUsuario.add(correo);
-                        res.status(201).json({ message: 'Usuario creado exitosamente', id_usuario: results.insertId });
-                    });
-                });
-            });
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor en usuarios crear' });
-    }
-});
-
-
-app.post('/credenciales', (req, res) => {
-    try{
-        const { correo, contraseña } = req.body;
-        
-        // Busca el usuario en la base de datos por su nombre de usuario
-        pool.query('SELECT * FROM usuarios WHERE CorreoElectronico = ?', [correo], (error, results, fields) => {
-            if (error) {
+          // Inserta la información de la foto en la base de datos
+          pool.query(
+            "INSERT INTO fotos (nombre, url_foto) VALUES (?, ?)",
+            [nombre, url],
+            (error, results1, fields) => {
+              if (error) {
                 console.error(error);
-                res.status(500).json({ error: 'Error al iniciar sesión' });
+                res
+                  .status(500)
+                  .json({ error: "Error al agregar foto de perfil" });
                 return;
-            }
-            
-            // Si no se encuentra el usuario
-            if (results.length === 0) {
-                res.status(401).json({ error: 'Nombre de usuario o contraseña incorrectos' });
-                return;
-            }
+              }
 
-            // Compara la contraseña proporcionada con la contraseña encriptada almacenada en la base de datos
-            bcrypt.compare(contraseña, results[0].Pass, (err, resultado) => {
-                if (err) {
-                    //console.error('Error al comparar contraseñas:', err);
-                    res.status(500).json({ error: 'Error al iniciar sesión' });
+              // Inserta la relación entre el usuario y la foto de perfil
+              pool.query(
+                'UPDATE fotos_perfil SET estado = "inactivo" WHERE id_usuario = ?',
+                [id_usuario],
+                (error, results2, fields) => {
+                  if (error) {
+                    console.error(error);
+                    res
+                      .status(500)
+                      .json({ error: "Error al agregar foto de perfil" });
                     return;
-                }
-                if (resultado) {
-                    // Si las contraseñas coinciden, el inicio de sesión es exitoso
-                    pool.query('SELECT ID FROM usuarios WHERE CorreoElectronico = ?', [correo], (error, results1, fields) => {
-                        if (error) {
-                            console.error(error);
-                            res.status(500).json({ error: 'Error al obtener usuario' });
-                            return;
-                        }
+                  }
 
-                        const params = {
-                            UserPoolId: region_cognito,
-                            Username: correo
-                        };
-                    
-                        cognitoISP.adminGetUser(params, function(err, data) {
-                            if (err) {
-                                console.error('Error al obtener las credenciales del usuario:', err);
-                                res.status(500).json({ error: 'Error al obtener credenciales' });
-                                return;
-                            }
-                            let verificacion = data.UserAttributes[1].Value;
-                            
-                            if(verificacion === 'false'){
-                                res.status(401).json({ error: 'Usuario no verificado' });
-                            }else{
-                                res.status(200).json({ message: 'Inicio de sesión exitoso', id_usuario: results1[0].ID });
-                            }
+                  // Desactiva todas las fotos de perfil anteriores del usuario
+                  pool.query(
+                    'INSERT INTO fotos_perfil (id_usuario, id_foto, estado) VALUES (?, ?, "activo")',
+                    [id_usuario, results1.insertId],
+                    (error, results3, fields) => {
+                      if (error) {
+                        console.error(error);
+                        res
+                          .status(500)
+                          .json({
+                            error:
+                              "Error al actualizar estado de fotos de perfil",
+                          });
+                        return;
+                      }
+
+                      console.log("Foto de perfil agregada exitosamente");
+                      res
+                        .status(201)
+                        .json({
+                          message: "Foto de perfil agregada exitosamente",
                         });
-                        
-                    });
-                } else {
-                    // Si las contraseñas no coinciden, el inicio de sesión falla
-                    res.status(401).json({ error: 'Nombre de usuario o contraseña incorrectos' });
+                    }
+                  );
                 }
-            });
+              );
+            }
+          );
         });
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor en credenciales' });
-    }
+      }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error interno del servidor en fotos perfil" });
+  }
 });
 
-
-// Inicio de sesión por reconocimiento facial
-app.post('/reconocimiento_facial', async (req, res) => {
-    try {
-        const { imagen, correo } = req.body;
-
-        // Primero, obtén el id_usuario correspondiente al username
-        pool.query('SELECT ID FROM usuarios WHERE CorreoElectronico = ?', [correo], async (error, results, fields) => {
+//Obtener datos del usuario y foto de perfil
+app.post("/obtener_usuarios", (req, res) => {
+  try {
+    const { username, id_usuario } = req.body;
+    pool.query(
+      "SELECT * FROM Usuarios WHERE username = ?",
+      [username],
+      (error, results, fields) => {
+        if (error) {
+          console.error(error);
+          res.status(500).json({ error: "Error al obtener usuarios" });
+          return;
+        }
+        pool.query(
+          'SELECT id_foto FROM fotos_perfil WHERE id_usuario = ? AND estado = "activo"',
+          [id_usuario],
+          (error, results1, fields) => {
             if (error) {
-                console.error('Error:', error);
-                res.status(500).json({ mensaje: 'Error interno del servidor al buscar usuario' });
-            } else {
-                // Asegúrate de que se encontró un usuario
-                if (results.length > 0) {
-                    const id_usuario = results[0].ID;
-
-                    // Ahora, realiza la consulta original con el id_usuario correcto
-                    pool.query('SELECT FotoPerfil FROM usuarios WHERE ID = ?', [id_usuario], async (error, results, fields) => {
-                        if (error) {
-                            console.error('Error:', error);
-                            res.status(500).json({ mensaje: 'Error interno del servidor en buscar foto de perfil' });
-                        } else {
-                            if (results.length > 0) {
-                                const fotoPerfil = results[0].FotoPerfil;
-
-                                // Verifica que la URL de la foto de perfil no sea nula o indefinida
-                                if (fotoPerfil) {
-                                    const claveFoto = fotoPerfil.split('/').slice(-2)[0] + '/' + fotoPerfil.split('/').slice(-1)[0];
-                                    // Obtener la imagen de la foto de perfil desde AWS S3
-                                    const s3Params = {
-                                        Bucket: nombreBucket,
-                                        Key: claveFoto
-                                    };
-                                    try {
-                                        const s3Response = await s3Rekognition.getObject(s3Params).promise();
-                                        const fotoPerfilBuffer = s3Response.Body;
-
-                                        const params = {
-                                            SourceImage: {
-                                                Bytes: fotoPerfilBuffer
-                                            },
-                                            TargetImage: {
-                                                Bytes: Buffer.from(imagen, 'base64')
-                                            },
-                                            SimilarityThreshold: 10
-                                        };
-
-                                        const response = await rekognitionUser.compareFaces(params).promise();
-                                        const similarity = response.FaceMatches[0]?.Similarity || 0;
-                                        let esLaMismaPersona = false;
-                                        if (similarity > 90) {
-                                            esLaMismaPersona = true;
-                                        }
-
-                                        const params1 = {
-                                            UserPoolId: region_cognito,
-                                            Username: correo
-                                        };
-
-                                        cognitoISP.adminGetUser(params1, function(err, data) {
-                                            if (err) {
-                                                console.error('Error al obtener las credenciales del usuario:', err);
-                                                return;
-                                            }
-                                            let verificacion = data.UserAttributes[1].Value;
-
-                                            if(verificacion === 'false'){
-                                                res.status(401).json({ error: 'Usuario no verificado' });
-                                            }else{
-                                                res.status(200).json({ Comparacion: similarity, EsLaMismaPersona: esLaMismaPersona, id_usuario: id_usuario });
-                                                //res.status(200).json({ message: 'Inicio de sesión exitoso', id_usuario: results1[0].ID });
-                                            }
-                                        });
-                                                                                
-                                    } catch (error) {
-                                        console.error('Error al obtener la foto de perfil de S3:', error);
-                                        res.status(500).json({ mensaje: 'Error interno del servidor al obtener la foto de perfil de S3' });
-                                    }
-                                } else {
-                                    res.status(404).json({ mensaje: 'La URL de la foto de perfil del usuario es nula o indefinida' });
-                                }
-                            } else {
-                                res.status(404).json({ mensaje: 'No se encontró la foto de perfil del usuario' });
-                            }
-                        }
-                    });
-                } else {
-                    res.status(404).json({ mensaje: 'No se encontró el usuario' });
+              console.error(error);
+              res
+                .status(500)
+                .json({ error: "Error al obtener fotos de perfil" });
+              return;
+            }
+            pool.query(
+              "SELECT url_foto FROM fotos WHERE id_foto = ?",
+              [results1[0].id_foto],
+              (error, results2, fields) => {
+                if (error) {
+                  console.error(error);
+                  res.status(500).json({ error: "Error al obtener fotos" });
+                  return;
                 }
-            }
-        });
-        } catch (error) {
-        console.error('Error:', error);
-                res.status(500).json({ mensaje: 'Error interno del servidor en comparar fotos' });
+                //console.log({id_usuario: results[0].id_usuario, nombre: results[0].nombre, username: results[0].username, url_foto: results2[0].url_foto});
+                res
+                  .status(200)
+                  .json({
+                    id_usuario: results[0].id_usuario,
+                    nombre: results[0].nombre,
+                    username: results[0].username,
+                    url_foto: results2[0].url_foto,
+                  });
+              }
+            );
+          }
+        );
+      }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error interno del servidor en obtener usuarios" });
+  }
+});
+
+//Actualizar datos del usuario
+app.put("/actualizar_datos", (req, res) => {
+  try {
+    const { id_usuario, nombre, username } = req.body;
+    pool.query(
+      "UPDATE Usuarios SET nombre = ?, username = ? WHERE id_usuario = ?",
+      [nombre, username, id_usuario],
+      (error, results, fields) => {
+        if (error) {
+          console.error(error);
+          res.status(500).json({ error: "Error al actualizar datos" });
+          return;
         }
-    }
-);
-
-// Crear topic
-async function createTopic(topicName) {
-    const params = {
-        Name: topicName
-    };
-
-    try {
-        const response = await sns.createTopic(params).promise();
-        return response.TopicArn;
-    } catch (error) {
-        console.error('Error al crear el topic:', error);
-        throw error;
-    }
-}
-
-
-// Suscribir un email
-app.post('/suscribir_email', async (req, res) => {
-    const { nombre, email } = req.body;
-    try {
-        const topicArn = await createTopic(nombre);
-        sns.subscribe({
-            TopicArn: topicArn,
-            Protocol: 'email',
-            Endpoint: email
-        }, (err, data) => {
-            if (err) res.status(500).json({ error: err });
-            else res.status(200).json({ data });
-        });
-    } catch (err) {
-        res.status(500).json({ error: err });
-    }
+        res.status(200).json({ message: "Datos actualizados exitosamente" });
+      }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error interno del servidor en actualizar datos" });
+  }
 });
 
-// Suscribir un teléfono
-app.post('/suscribir_telefono', async (req, res) => {
-    const { nombre, telefono } = req.body;
-    try {
-        const topicArn = await createTopic(nombre);
-        sns.subscribe({
-            TopicArn: topicArn,
-            Protocol: 'sms',
-            Endpoint: telefono
-        }, (err, data) => {
-            if (err) res.status(500).json({ error: err });
-            else res.status(200).json({ data });
-        });
-    } catch (err) {
-        res.status(500).json({ error: err });
-    }
-});
-
-// Publicar mensaje
-app.post('/publicar_mensaje', async (req, res) => {
-    const { mensaje , topicName} = req.body;
-    try {
-        const topicArn = await createTopic(topicName);
-        sns.publish({
-            Message: mensaje,
-            TopicArn: topicArn
-        }, (err, data) => {
-            if (err) res.status(500).json({ error: err });
-            else res.status(200).json({ data });
-        });
-    } catch (err) {
-        res.status(500).json({ error: err });
-    }
-});
-
-// Eliminar suscripción
-app.post('/eliminar_suscripcion', async (req, res) => {
-    const { correo, topicName } = req.body;
-    try {
-        const topicArn = await createTopic(topicName);
-        sns.listSubscriptionsByTopic({
-            TopicArn: topicArn
-        }, (err, data) => {
-            if (err) res.status(500).json({ error: err });
-            else {
-                const subscriptions = data.Subscriptions;
-                const subscription = subscriptions.find(sub => sub.Endpoint === correo);
-                sns.unsubscribe({
-                    SubscriptionArn: subscription.SubscriptionArn
-                }, (err, data) => {
-                    if (err) res.status(500).json({ error: err });
-                    else res.status(200).json({ data });
-                });
-            }
-        });
-    } catch (err) {
-        res.status(500).json({ error: err });
-    }
-});
-
-// Eliminar topic
-app.post('/eliminar_topic', async (req, res) => {
-    const { topicName } = req.body;
-    try {
-        const topicArn = await createTopic(topicName);
-        sns.deleteTopic({
-            TopicArn: topicArn
-        }, (err, data) => {
-            if (err) res.status(500).json({ error: err });
-            else res.status(200).json({ data });
-        });
-    } catch (err) {
-        res.status(500).json({ error: err });
-    }
-});
-
-/// Asignar nivel a usuario
-app.post('/asignarNivel', (req, res) => {
-    const { idUsuario, nivel } = req.body;
-
-    const query = 'UPDATE usuarios SET Nivel = ? WHERE ID = ?';
-
-    pool.query(query, [nivel, idUsuario], (err, result) => {
-        if (err) {
-            console.error('Error al asignar el nivel:', err);
-            res.status(500).json({ error: err });
-        } else {
-            res.status(200).json({ message: 'Nivel asignado con éxito' });
+// Crear foto en album
+app.post("/crear_foto_albumes", (req, res) => {
+  try {
+    const { nombre, id_usuario, imagenBase64, nombre_album } = req.body;
+    // Insertar el álbum en la base de datos
+    pool.query(
+      "SELECT id_album FROM albumes WHERE nombre = ? AND id_usuario = ?",
+      [nombre_album, id_usuario],
+      (error, results, fields) => {
+        if (error) {
+          console.error(error);
+          res.status(500).json({ error: "Error al crear álbum" });
+          return;
         }
-    });
-});
 
-// Enviar clases
-app.get('/clases', (req, res) => {
-    const query = 'SELECT * FROM clases';
-
-    pool.query(query, (err, result) => {
-        if (err) {
-            console.error('Error al obtener las clases:', err);
-            res.status(500).json({ error: err });
-        } else {
-            res.status(200).json(result);
-        }
-    });
-});
-
-// Enviar toda la informacion de clase por id
-app.get('/clases/:id', (req, res) => {
-    const id = req.params.id;
-    const query = 'SELECT * FROM clases WHERE ID = ?';
-
-    pool.query(query, [id], (err, result) => {
-        if (err) {
-            console.error('Error al obtener la clase:', err);
-            res.status(500).json({ error: err });
-        } else {
-            res.status(200).json(result);
-        }
-    });
-});
-
-// Rutinas del nivel del usuario
-app.get('/rutinas/:id_usuario', (req, res) => {
-    const id_usuario = req.params.id_usuario;
-    const query = 'SELECT * FROM rutinas WHERE Nivel = (SELECT Nivel FROM usuarios WHERE ID = ?)';
-
-    pool.query(query, [id_usuario], (err, result) => {
-        if (err) {
-            console.error('Error al obtener las rutinas:', err);
-            res.status(500).json({ error: err });
-        } else {
-            res.status(200).json(result);
-        }
-    });
-});
-
-// Rutinas del nivel del usuario con sus ejercicios
-app.get('/rutinas_ejercicios/:id_usuario', (req, res) => {
-    const id_usuario = req.params.id_usuario;
-    const query = 'SELECT * FROM rutinas WHERE Nivel = (SELECT Nivel FROM usuarios WHERE ID = ?)';
-
-    pool.query(query, [id_usuario], (err, rutinas) => {
-        if (err) {
-            console.error('Error al obtener las rutinas:', err);
-            res.status(500).json({ error: err });
-        } else {
-            Promise.all(rutinas.map(rutina => {
-                return new Promise((resolve, reject) => {
-                    const query = 'SELECT * FROM ejercicios WHERE IDRutina = ?';
-                    pool.query(query, [rutina.ID], (err, ejercicios) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve({ ...rutina, ejercicios });
-                        }
-                    });
-                });
-            }))
-            .then(rutinas => res.status(200).json(rutinas))
-            .catch(err => {
-                console.error('Error al obtener los ejercicios:', err);
-                res.status(500).json({ error: err });
+        // Verificar si se encontró el álbum
+        if (results.length === 0) {
+          res
+            .status(404)
+            .json({
+              error: "El álbum no existe para el usuario proporcionado",
             });
+          return;
         }
-    });
+
+        // Obtener el ID del álbum
+        const id_album = results[0].id_album;
+        var cantidad = 0;
+        pool.query(
+          "SELECT COUNT(*) FROM fotos WHERE id_album = ?",
+          [results[0].id_album],
+          (error, results, fields) => {
+            if (error) {
+              console.error(error);
+              res
+                .status(500)
+                .json({ error: "Error al obtener fotos de album" });
+              return;
+            }
+            cantidad = results[0]["COUNT(*)"];
+          }
+        );
+
+        // Convertir la imagen base64 a un buffer
+        const imagenBuffer = Buffer.from(imagenBase64, "base64");
+
+        // Nombre de la foto en S3
+        const nombreFotoEnS3 =
+          "Fotos_Publicadas/" + nombre + id_album + cantidad;
+
+        // Parámetros para subir la foto a S3
+        const params = {
+          Bucket: nombreBucket,
+          Key: nombreFotoEnS3,
+          Body: imagenBuffer,
+          ContentType: "image/jpeg", // Tipo de contenido de la imagen
+        };
+
+        // URL de la foto en S3
+        const url =
+          "https://practica1-g2-imagenes-b.s3.us-east-2.amazonaws.com/" +
+          nombreFotoEnS3;
+
+        // Insertar la foto en la base de datos
+        pool.query(
+          "INSERT INTO fotos (nombre, url_foto, id_album) VALUES (?, ?, ?)",
+          [nombre, url, id_album],
+          (error, results, fields) => {
+            if (error) {
+              console.error(error);
+              res.status(500).json({ error: "Error al agregar foto al álbum" });
+              return;
+            }
+
+            // Subir la foto a S3
+            s3.upload(params, (err, data) => {
+              if (err) {
+                console.error("Error al subir la foto a S3:", err);
+                res.status(500).json({ error: "Error al subir la foto a S3" });
+                return;
+              }
+
+              console.log("Foto subida correctamente a S3:", data.Location);
+              res
+                .status(201)
+                .json({ message: "Foto agregada al álbum exitosamente" });
+            });
+          }
+        );
+      }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error interno del servidor en crear fotos albumes" });
+  }
 });
 
-// Ejercicios de la rutina por id
-app.get('/ejercicios/:id_rutina', (req, res) => {
-    const id_rutina = req.params.id_rutina;
-    const query = 'SELECT * FROM ejercicios WHERE ID_rutina = ?';
-
-    pool.query(query, [id_rutina], (err, result) => {
-        if (err) {
-            console.error('Error al obtener los ejercicios:', err);
-            res.status(500).json({ error: err });
-        } else {
-            res.status(200).json(result);
+//Crear album
+app.post("/crear_album", (req, res) => {
+  try {
+    const { nombre, id_usuario } = req.body;
+    pool.query(
+      "INSERT INTO albumes (nombre, id_usuario) VALUES (?, ?)",
+      [nombre, id_usuario],
+      (error, results, fields) => {
+        if (error) {
+          console.error(error);
+          res.status(500).json({ error: "Error al crear album" });
+          return;
         }
-    });
+        res.status(201).json({ message: "Album creado exitosamente" });
+      }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error interno del servidor en crear album" });
+  }
 });
 
-// Ejercicio por id
-app.get('/ejercicio/:id', (req, res) => {
-    const id = req.params.id;
-    const query = 'SELECT * FROM ejercicios WHERE ID = ?';
-
-    pool.query(query, [id], (err, result) => {
-        if (err) {
-            console.error('Error al obtener el ejercicio:', err);
-            res.status(500).json({ error: err });
-        } else {
-            res.status(200).json(result);
+//Modificar album
+app.put("/modificar_album", (req, res) => {
+  try {
+    const { nombre, id_album } = req.body;
+    pool.query(
+      "UPDATE albumes SET nombre = ? WHERE id_album = ?",
+      [nombre, id_album],
+      (error, results, fields) => {
+        if (error) {
+          console.error(error);
+          res.status(500).json({ error: "Error al modificar album" });
+          return;
         }
-    });
+        res.status(200).json({ message: "Album modificado exitosamente" });
+      }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error interno del servidor en modificar album" });
+  }
 });
 
-// Enviar todas las solicitudes con información detallada del usuario
-app.get('/solicitudes', (req, res) => {
-    const query = `
-        SELECT 
-            solicitudes.ID, 
-            usuarios.CorreoElectronico AS CorreoUsuario, 
-            usuarios.Nombre AS NombreUsuario, 
-            solicitudes.NivelSolicitado, 
-            solicitudes.Estado, 
-            solicitudes.FechaSolicitud
-        FROM solicitudes
-        INNER JOIN usuarios ON solicitudes.IDUsuario = usuarios.ID
-    `;
+// Eliminar album y sus fotos
+app.delete("/eliminar_album", (req, res) => {
+  try {
+    const { nombre, id_usuario } = req.body;
 
-    pool.query(query, (err, result) => {
-        if (err) {
-            console.error('Error al obtener las solicitudes:', err);
-            res.status(500).json({ error: err });
-        } else {
-            res.status(200).json(result);
+    // Consultar el ID del álbum
+    pool.query(
+      "SELECT id_album FROM albumes WHERE nombre = ? AND id_usuario = ?",
+      [nombre, id_usuario],
+      (error, results, fields) => {
+        if (error) {
+          console.error(error);
+          res.status(500).json({ error: "Error al eliminar álbum" });
+          return;
         }
-    });
+
+        // Verificar si se encontró el álbum
+        if (results.length === 0) {
+          res
+            .status(404)
+            .json({
+              error: "El álbum no existe para el usuario proporcionado",
+            });
+          return;
+        }
+
+        const id_album = results[0].id_album;
+
+        // Obtener las URLs de las fotos del álbum
+        pool.query(
+          "SELECT url_foto FROM fotos WHERE id_album = ?",
+          [id_album],
+          (error, results, fields) => {
+            if (error) {
+              console.error(error);
+              res
+                .status(500)
+                .json({ error: "Error al obtener fotos del álbum" });
+              return;
+            }
+
+            // Eliminar cada foto del álbum del bucket de S3
+            results.forEach((photo) => {
+              const url = photo.url_foto;
+              const key = url.split("/").slice(-1)[0]; // Extraer el nombre del archivo de la URL
+              const params = {
+                Bucket: nombreBucket,
+                Key: "Fotos_Publicadas/" + key,
+              };
+
+              // Eliminar la foto del bucket de S3
+              s3.deleteObject(params, (err, data) => {
+                if (err) {
+                  console.error("Error al eliminar foto de S3:", err);
+                  res
+                    .status(500)
+                    .json({ error: "Error al eliminar fotos del álbum en S3" });
+                  return;
+                }
+                console.log("Foto eliminada de S3:", url);
+              });
+            });
+
+            // Eliminar las fotos del álbum de la base de datos
+            pool.query(
+              "DELETE FROM fotos WHERE id_album = ?",
+              [id_album],
+              (error, results, fields) => {
+                if (error) {
+                  console.error(error);
+                  res
+                    .status(500)
+                    .json({ error: "Error al eliminar fotos del álbum" });
+                  return;
+                }
+
+                // Eliminar el álbum de la base de datos
+                pool.query(
+                  "DELETE FROM albumes WHERE id_album = ?",
+                  [id_album],
+                  (error, results, fields) => {
+                    if (error) {
+                      console.error(error);
+                      res
+                        .status(500)
+                        .json({ error: "Error al eliminar álbum" });
+                      return;
+                    }
+                    res
+                      .status(200)
+                      .json({ message: "Álbum eliminado exitosamente" });
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error interno del servidor en eliminar album" });
+  }
 });
 
-// Solicitar subir de nivel
-app.post('/solicitar_subir_nivel', (req, res) => {
+//Obtener albumes
+app.post("/obtener_albumes", (req, res) => {
+  try {
+    const { id_usuario } = req.body;
+    pool.query(
+      "SELECT * FROM albumes WHERE id_usuario = ?",
+      [id_usuario],
+      (error, results, fields) => {
+        if (error) {
+          console.error(error);
+          res.status(500).json({ error: "Error al obtener albumes" });
+          return;
+        }
+        res.status(200).json(results);
+      }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error interno del servidor en obtener album" });
+  }
+});
+
+// Obtener fotos de perfil
+app.post("/obtener_fotos_perfil", (req, res) => {
+  try {
     const { id_usuario } = req.body;
 
-    const queryNivelActual = 'SELECT Nivel FROM usuarios WHERE ID = ?';
+    // Realizar una sola consulta para obtener las fotos de perfil inactivas del usuario
+    pool.query(
+      "SELECT fotos.url_foto FROM fotos_perfil INNER JOIN fotos ON fotos_perfil.id_foto = fotos.id_foto WHERE fotos_perfil.id_usuario = ?",
+      [id_usuario],
+      (error, results, fields) => {
+        if (error) {
+          console.error(error);
+          res.status(500).json({ error: "Error al obtener fotos de perfil" });
+          return;
+        }
+        console.log(results);
+        // Devolver las fotos obtenidas
+        res.status(200).json(results);
+      }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error interno del servidor en obtener fotos perfil" });
+  }
+});
 
-    pool.query(queryNivelActual, [id_usuario], (err, result) => {
-        if (err) {
-            console.error('Error al obtener el nivel del usuario:', err);
-            res.status(500).json({ error: err });
+//obtener fotos de album
+app.post("/obtener_fotos_album", (req, res) => {
+  try {
+    const { id_album } = req.body;
+    pool.query(
+      "SELECT * FROM fotos WHERE id_album = ?",
+      [id_album],
+      (error, results, fields) => {
+        if (error) {
+          console.error(error);
+          res.status(500).json({ error: "Error al obtener fotos de album" });
+          return;
+        }
+        res.status(200).json(results);
+      }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error interno del servidor en obtener fotos album" });
+  }
+});
+
+app.post("/descripcion", async (req, res) => {
+  try {
+    const { id_usuario } = req.body;
+    pool.query('SELECT url_foto FROM fotos_perfil INNER JOIN fotos ON fotos_perfil.id_foto = fotos.id_foto WHERE fotos_perfil.id_usuario = ? AND fotos_perfil.estado = ?', [id_usuario, 'activo'], async (error, results, fields) => {
+        if (error) {
+            console.error('Error:', error);
+            res.status(500).json({ mensaje: 'Error interno del servidor en buscar foto de perfil' });
         } else {
-            const nivelActual = result[0].Nivel;
-            const nivelSolicitado = nivelActual + 1;
-
-            const querySolicitud = 'INSERT INTO solicitudes (IDUsuario, NivelSolicitado, Estado, FechaSolicitud) VALUES (?, ?, "Pendiente", NOW())';
-
-            pool.query(querySolicitud, [id_usuario, nivelSolicitado], (err, result) => {
-                if (err) {
-                    console.error('Error al solicitar subir de nivel:', err);
-                    res.status(500).json({ error: err });
+            if (results.length > 0) {
+                const fotoPerfil = results[0].url_foto;
+                console.log(fotoPerfil);
+                const claveFoto = fotoPerfil.split('/').slice(-2)[0] + '/' + fotoPerfil.split('/').slice(-1)[0];
+                console.log(claveFoto);
+                const s3Params = {
+                    Bucket: nombreBucket,
+                    Key: claveFoto
+                };
+                const s3Response = await s3.getObject(s3Params).promise();
+                const fotoPerfilBuffer = s3Response.Body;
+                const params = {
+                    Image: {
+                        Bytes: fotoPerfilBuffer
+                    },
+                    Attributes: ['ALL']
+                };
+                
+                const response = await rekognition.detectFaces(params).promise();
+                if (response) {
+                    const minimo = response.FaceDetails[0].AgeRange.Low;
+                    const maximo = response.FaceDetails[0].AgeRange.High;
+                    const genero = response.FaceDetails[0].Gender.Value;
+                    const emocion = response.FaceDetails[0].Emotions[0].Type;
+                    const emocion1 = response.FaceDetails[0].Emotions[1].Type;
+                    const bigote = response.FaceDetails[0].Mustache.Value;
+                    const barba = response.FaceDetails[0].Beard.Value;
+                    const lentes = response.FaceDetails[0].Eyeglasses.Value;
+                    respuesta = {
+                        minimo: minimo,
+                        maximo: maximo,
+                        genero: genero,
+                        emocion: emocion,
+                        emocion1: emocion1,
+                        bigote: bigote,
+                        barba: barba,
+                        lentes: lentes
+                    };
+                    res.status(200).json(respuesta);
                 } else {
-                    res.status(201).json({ message: 'Solicitud enviada con éxito' });
+                    res.status(500).json({ mensaje: 'Error' });
                 }
-            });
+            } else {
+                res.status(404).json({ mensaje: 'No se encontró la foto de perfil del usuario' });
+            }
         }
     });
+    
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor en obtener descripcion' });
+  }
 });
 
-// Obtener datos de usuario por id
-app.get('/usuarios/:id', (req, res) => {
-    const id = req.params.id;
-    const query = 'SELECT * FROM usuarios WHERE ID = ?';
+// Inicio de sesión por reconocimiento facial
+app.post("/reconocimiento_facial", async (req, res) => {
+  try {
+    const { imagen, username } = req.body;
 
-    pool.query(query, [id], (err, result) => {
-        if (err) {
-            console.error('Error al obtener el usuario:', err);
-            res.status(500).json({ error: err });
+    // Primero, obtén el id_usuario correspondiente al username
+    pool.query(
+      "SELECT id_usuario FROM Usuarios WHERE username = ?",
+      [username],
+      async (error, results, fields) => {
+        if (error) {
+          console.error("Error:", error);
+          res
+            .status(500)
+            .json({ mensaje: "Error interno del servidor al buscar usuario" });
         } else {
-            res.status(200).json(result);
+          // Asegúrate de que se encontró un usuario
+          if (results.length > 0) {
+            const id_usuario = results[0].id_usuario;
+
+            // Ahora, realiza la consulta original con el id_usuario correcto
+            pool.query(
+              "SELECT url_foto FROM fotos_perfil INNER JOIN fotos ON fotos_perfil.id_foto = fotos.id_foto WHERE fotos_perfil.id_usuario = ? AND fotos_perfil.estado = ?",
+              [id_usuario, "activo"],
+              async (error, results, fields) => {
+                if (error) {
+                  console.error("Error:", error);
+                  res
+                    .status(500)
+                    .json({
+                      mensaje:
+                        "Error interno del servidor en buscar foto de perfil",
+                    });
+                } else {
+                  if (results.length > 0) {
+                    const fotoPerfil = results[0].url_foto;
+
+                    //console.log('URL de la foto de perfil:', fotoPerfil);
+                    const claveFoto =
+                      fotoPerfil.split("/").slice(-2)[0] +
+                      "/" +
+                      fotoPerfil.split("/").slice(-1)[0];
+                    //console.log('Clave de la foto de perfil:', claveFoto);
+                    // Verifica que la URL de la foto de perfil no sea nula o indefinida
+                    if (fotoPerfil) {
+                      // Obtener la imagen de la foto de perfil desde AWS S3
+                      const s3Params = {
+                        Bucket: nombreBucket,
+                        Key: claveFoto,
+                      };
+                      //console.log("imagen desde el back", imagen)
+                      try {
+                        const s3Response = await s3
+                          .getObject(s3Params)
+                          .promise();
+                        const fotoPerfilBuffer = s3Response.Body;
+
+                        const params = {
+                          SourceImage: {
+                            Bytes: fotoPerfilBuffer,
+                          },
+                          TargetImage: {
+                            Bytes: Buffer.from(imagen, "base64"),
+                          },
+                          SimilarityThreshold: 10,
+                        };
+
+                        const response = await rekognition
+                          .compareFaces(params)
+                          .promise();
+                        const similarity =
+                          response.FaceMatches[0]?.Similarity || 0;
+                        let esLaMismaPersona = false;
+                        if (similarity > 90) {
+                          esLaMismaPersona = true;
+                        }
+
+                        res
+                          .status(200)
+                          .json({
+                            Comparacion: similarity,
+                            EsLaMismaPersona: esLaMismaPersona,
+                            id_usuario: id_usuario,
+                          });
+                      } catch (error) {
+                        console.error(
+                          "Error al obtener la foto de perfil de S3:",
+                          error
+                        );
+                        res
+                          .status(500)
+                          .json({
+                            mensaje:
+                              "Error interno del servidor al obtener la foto de perfil de S3",
+                          });
+                      }
+                    } else {
+                      res
+                        .status(404)
+                        .json({
+                          mensaje:
+                            "La URL de la foto de perfil del usuario es nula o indefinida",
+                        });
+                    }
+                  } else {
+                    res
+                      .status(404)
+                      .json({
+                        mensaje: "No se encontró la foto de perfil del usuario",
+                      });
+                  }
+                }
+              }
+            );
+          } else {
+            res.status(404).json({ mensaje: "No se encontró el usuario" });
+          }
         }
-    });
+      }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error interno del servidor en comparar fotos" });
+  }
 });
 
-// Editar usuario
-app.put('/usuarios/:id', (req, res) => {
-    const id = req.params.id;
-    const { nombre, apellido, correo, peso, altura, nivel } = req.body;
+app.post('/albumes_rekognition', async (req, res) => {
+  try {
+      const { imagen, id_usuario, nombreImagen, descripcion } = req.body;
+      
+      // Decodificar la imagen de base64
+      const imageBuffer = Buffer.from(imagen, 'base64');
+  
+      // Parámetros para la operación detectLabels
+      const params = {
+          Image: {
+          Bytes: imageBuffer
+          },
+          MaxLabels: 100,
+          MinConfidence: 70
+      };
+  
+      // Llamar a la operación detectLabels de Rekognition
+      const response = await rekognition.detectLabels(params).promise();
+      
+      // Buscar las etiquetas que tienen "Animal" en sus padres y que tienen instancias
+      const animalLabels = response.Labels.filter(label => label.Parents.some(parent => parent.Name === 'Animal') && label.Instances.length > 0);
+      
+      // Si se encontró una etiqueta de animal
+      if (animalLabels.length > 0) {
+          const nombreAlbum = animalLabels[0].Name;
 
-    const query = 'UPDATE usuarios SET Nombre = ?, Apellido = ?, CorreoElectronico = ?, Peso = ?, Altura = ?, Nivel = ? WHERE ID = ?';
-
-    pool.query(query, [nombre, apellido, correo, peso, altura, nivel, id], (err, result) => {
-        if (err) {
-            console.error('Error al editar el usuario:', err);
-            res.status(500).json({ error: err });
-        } else {
-            res.status(200).json({ message: 'Usuario editado con éxito' });
-        }
-    });
+          // Verificar si el usuario ya tiene un álbum con ese nombre
+          pool.query('SELECT id_album FROM albumes WHERE nombre = ? AND id_usuario = ?', [nombreAlbum, id_usuario], async (error, results, fields) => {
+              if (error) {
+                  console.error('Error:', error);
+                  res.status(500).json({ mensaje: 'Error interno del servidor en buscar album' });
+              } else if (results.length > 0) {
+                  // Si el álbum ya existe, usar su ID
+                  const id_album = results[0].id_album;
+                  await insertarFoto(id_album, nombreImagen, imageBuffer, descripcion, res);
+              } else {
+                  // Si el álbum no existe, crear uno nuevo
+                  pool.query('INSERT INTO albumes (nombre, id_usuario) VALUES (?, ?)', [nombreAlbum, id_usuario], async (error, results, fields) => {
+                      if (error) {
+                          console.error('Error:', error);
+                          res.status(500).json({ mensaje: 'Error interno del servidor en crear album' });
+                      } else {
+                          console.log(`Álbum "${nombreAlbum}" creado y asignado al usuario con ID ${id_usuario}`);
+                          
+                          // Obtener el ID del álbum recién creado
+                          const id_album = results.insertId;
+                          await insertarFoto(id_album, nombreImagen, imageBuffer, descripcion, res);
+                      }
+                  });
+              }
+          });
+      } else {
+          res.status(200).json({ mensaje: 'No se encontraron etiquetas de animales' });
+      }
+  } catch (error) {
+      console.error('Error:', error);
+      res.status(500).json({ mensaje: 'Error interno del servidor en albumes rekognition' });
+  }
 });
 
-// Aceptar solicitud por id de solicitud
-app.put('/aceptar_solicitud/:id', (req, res) => {
-    const id = req.params.id;
-    const query = 'UPDATE solicitudes SET Estado = "Aceptada" WHERE ID = ?';
+async function insertarFoto(id_album, nombreImagen, imageBuffer, descripcion, res) {
+  // Nombre que tendra la imagen en S3
+  const nombreImagenEnS3 = "Fotos_Publicadas/" + nombreImagen + id_album;
 
-    pool.query(query, [id], (err, result) => {
-        if (err) {
-            console.error('Error al aceptar la solicitud:', err);
-            res.status(500).json({ error: err });
-        } else {
-            res.status(200).json({ message: 'Solicitud aceptada con éxito' });
-        }
-    });
+  // Subir la imagen al bucket de S3 y obtener la URL
+  const s3Params = {
+      Bucket: nombreBucket,
+      Key: nombreImagenEnS3,
+      Body: imageBuffer,
+      ContentType: 'image/jpeg'
+  };
+  const s3Response = await s3.upload(s3Params).promise();
+  const url_foto = s3Response.Location;
+
+  // Insertar la foto en el álbum
+  pool.query('INSERT INTO fotos (nombre, url_foto, id_album, descripcion) VALUES (?, ?, ?, ?)', [nombreImagen, url_foto, id_album, descripcion], (error, results, fields) => {
+      if (error) {
+          console.error('Error:', error);
+          res.status(500).json({ mensaje: 'Error interno del servidor en asignar foto al álbum' });
+      } else {
+          console.log(`Foto asignada al álbum con ID ${id_album}`);
+          res.status(200).json({ mensaje: 'Foto asignada al álbum' });
+      }
+  });
+}
+
+app.post('/obtener_texto', async (req, res) => {
+    try {
+        const { imagen } = req.body;
+        
+        // Decodificar la imagen de base64
+        const imageBuffer = Buffer.from(imagen, 'base64');
+    
+        // Parámetros para la operación detectText
+        const params = {
+            Image: {
+                Bytes: imageBuffer
+            }
+        };
+    
+        // Llamar a la operación detectText de Rekognition
+        const response = await rekognition.detectText(params).promise();
+        const textos = response.TextDetections
+            .filter(detection => detection.Type === 'WORD')
+            .map(detection => detection.DetectedText)
+            .join(' ');
+
+        console.log('Textos detectados:', textos);
+        res.status(200).json({ textos: textos });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor en obtener texto' });
+    }
 });
 
-// Rechazar solicitud por id de solicitud
-app.put('/rechazar_solicitud/:id', (req, res) => {
-    const id = req.params.id;
-    const query = 'UPDATE solicitudes SET Estado = "Rechazada" WHERE ID = ?';
-
-    pool.query(query, [id], (err, result) => {
-        if (err) {
-            console.error('Error al rechazar la solicitud:', err);
-            res.status(500).json({ error: err });
-        } else {
-            res.status(200).json({ message: 'Solicitud rechazada con éxito' });
-        }
-    });
+app.post('/traducir', async (req, res) => {
+  const { texto, idioma } = req.body;
+  const params = {
+    SourceLanguageCode: 'auto',
+    TargetLanguageCode: idioma,
+    Text: texto
+  };
+  transalte.translateText(params, (err, data) => {
+    if (err) {
+      console.error('Error:', err);
+      res.status(500).json({ mensaje: 'Error interno del servidor al traducir' });
+    } else {
+      res.status(200).json({ traduccion: data.TranslatedText });
+    }
+  });
 });
 
-// Obtener todos los Usuarios
-app.get('/usuarios/all', (req, res) => {
-    const query = 'SELECT * FROM usuarios';
+app.post('/obtener_mensaje_bot', async (req, res) => {
+  try {
+    const { message, sessionId } = req.body;
 
-    pool.query(query, (err, result) => {
-        if (err) {
-            console.error('Error al obtener los usuarios:', err);
-            res.status(500).json({ error: err });
-        } else {
-            res.status(200).json(result);
-        }
+    const lexClient = new AWS.LexRuntimeV2({
+      accessKeyId: bot_access_key,
+      secretAccessKey: bot_secret_access_key,
+      region: region
     });
-});
+    
+    const params = {
+      botId: bot_id,
+      botAliasId: bot_alias_id,
+      localeId: 'es_419',
+      sessionId: sessionId,
+      text: message
+    };
 
-// Obtnener todos los niveles
-app.get('/niveles', (req, res) => {
-    const query = 'SELECT * FROM niveles';
+    const response = await lexClient.recognizeText(params).promise();
 
-    pool.query(query, (err, result) => {
-        if (err) {
-            console.error('Error al obtener los niveles:', err);
-            res.status(500).json({ error: err });
+    let content = "";
+
+    if (!response.messages) {
+      content = "No se ha podido obtener una respuesta del bot.";
+    } else {
+      content = response.messages[0].content;
+    }
+
+    const newSessionId = response.sessionId;
+    const sessionState = response.sessionState?.dialogAction?.type || '';
+    const intentName = response['sessionState']['intent']['name'];
+    console.log('intentName:', intentName);
+    if (sessionState === 'Close') {
+      console.log('Intent:', intentName);
+      if (intentName === 'InfoAnimales') {
+        const animalName = content.toLowerCase();
+        const animal = animales.find(a => a.nombre.toLowerCase() === animalName);
+        console.log(animal);
+        if (animal) {
+          content = animal.informacionAdicional;
         } else {
-            res.status(200).json(result);
+          content = "Lo siento, no tengo información sobre ese animal.";
         }
-    });
+      } else if (intentName === 'habitatAnimales') {
+        const animalName = content.toLowerCase();
+        const animal = animales.find(a => a.nombre.toLowerCase() === animalName);
+        
+       
+        if (animal) {
+          content = animal.habitat;
+        } else {
+          content = "Lo siento, no tengo información sobre ese animal.";
+        }
+      }
+    }
+
+    res.status(200).json({ mensaje: content, nueva_sesion: newSessionId, estado_session: sessionState  });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor en obtener mensaje del bot' });
+  }
 });
 
 // escuchar puerto 3000
 app.listen(3000, () => {
-    console.log('Server is running on port 3000');
-  })
+  console.log("Server is running on port 3000");
+});

@@ -26,6 +26,10 @@ const acceskeyidSNS = process.env.AWS_ACCESS_KEY_ID_SNS;
 const secretaccesskeySNS = process.env.AWS_SECRET_ACCESS_KEY_SNS;
 const acceskeyidCognito = process.env.AWS_ACCESS_KEY_ID_COGNITO;
 const secretaccesskeyCognito = process.env.AWS_SECRET_ACCESS_KEY_COGNITO;
+const bot_access_key = process.env.BOT_ACCESS_KEY_ID
+const bot_secret_access_key = process.env.BOT_SECRET_ACCESS_KEY
+const bot_id = process.env.BOT_ID
+const bot_alias_id = process.env.BOT_ALIAS_ID
 
 // Create a connection pool to the RDS MySQL database
 const pool = mysql.createPool({
@@ -101,7 +105,7 @@ app.get('/check', (req, res) => {
 
 
 // Agregar un nuevo usuario
-app.post('/usuarios_crear', (req, res) => {
+app.post('/register', (req, res) => {
     try{
         const { nombre, apellido, correo, contraseña, peso, altura, foto, nivel } = req.body;
 
@@ -679,6 +683,186 @@ app.put('/usuarios/:id', (req, res) => {
             res.status(200).json({ message: 'Usuario editado con éxito' });
         }
     });
+});
+
+// Aceptar solicitud por id de solicitud
+app.put('/aceptar_solicitud/:id', (req, res) => {
+    const id = req.params.id;
+    const query = 'UPDATE solicitudes SET Estado = "Aceptada" WHERE ID = ?';
+
+    pool.query(query, [id], (err, result) => {
+        if (err) {
+            console.error('Error al aceptar la solicitud:', err);
+            res.status(500).json({ error: err });
+        } else {
+            res.status(200).json({ message: 'Solicitud aceptada con éxito' });
+        }
+    });
+});
+
+// Rechazar solicitud por id de solicitud
+app.put('/rechazar_solicitud/:id', (req, res) => {
+    const id = req.params.id;
+    const query = 'UPDATE solicitudes SET Estado = "Rechazada" WHERE ID = ?';
+
+    pool.query(query, [id], (err, result) => {
+        if (err) {
+            console.error('Error al rechazar la solicitud:', err);
+            res.status(500).json({ error: err });
+        } else {
+            res.status(200).json({ message: 'Solicitud rechazada con éxito' });
+        }
+    });
+});
+
+// Obtener todos los Usuarios
+app.get('/usuarios/all', (req, res) => {
+    const query = 'SELECT * FROM usuarios';
+
+    pool.query(query, (err, result) => {
+        if (err) {
+            console.error('Error al obtener los usuarios:', err);
+            res.status(500).json({ error: err });
+        } else {
+            res.status(200).json(result);
+        }
+    });
+});
+
+// Obtnener todos los niveles
+app.get('/niveles', (req, res) => {
+    const query = 'SELECT * FROM niveles';
+
+    pool.query(query, (err, result) => {
+        if (err) {
+            console.error('Error al obtener los niveles:', err);
+            res.status(500).json({ error: err });
+        } else {
+            res.status(200).json(result);
+        }
+    });
+});
+
+// Calificar clase
+app.post('/calificar_clase', (req, res) => {
+    const { IDUsuario, IDClase, Calificacion, Comentario } = req.body;
+
+    const query = 'INSERT INTO calificaciones (IDUsuario, IDClase, Calificacion, Fecha) VALUES (?, ?, ?, CURDATE())';
+
+    pool.query(query, [IDUsuario, IDClase, Calificacion], (err, result) => {
+        if (err) {
+            console.error('Error al calificar la clase:', err);
+            res.status(500).json({ error: err });
+        } else {
+            const queryPromedio = 'SELECT AVG(Calificacion) as Promedio FROM calificaciones WHERE IDClase = ?';
+            pool.query(queryPromedio, [IDClase], (err, result) => {
+                if (err) {
+                    console.error('Error al calcular el promedio de calificaciones:', err);
+                    res.status(500).json({ error: err });
+                } else {
+                    const promedio = result[0].Promedio;
+                    const queryUpdate = 'UPDATE clases SET Estrellas = ? WHERE ID = ?';
+                    pool.query(queryUpdate, [promedio, IDClase], (err, result) => {
+                        if (err) {
+                            console.error('Error al actualizar el promedio de calificaciones en la clase:', err);
+                            res.status(500).json({ error: err });
+                        } else {
+                            res.status(200).json({ message: 'Clase calificada y promedio actualizado con éxito' });
+                        }
+                    });
+                }
+            });
+        }
+    });
+});
+
+async function obtenerClases(profesor){
+    const query = 'SELECT * FROM clases WHERE profesor = ?';
+
+    return new Promise((resolve, reject) => {
+        pool.query(query, [profesor], (err, result) => {
+            if (err) {
+                console.error('Error al obtener las clases:', err);
+                reject(null);
+            } else {
+                resolve(result);
+            }
+        });
+    });
+}
+
+app.post('/obtener_mensaje_bot', async (req, res) => {
+    try {
+        const { message, sessionId } = req.body;
+
+        const lexClient = new AWS.LexRuntimeV2({
+            accessKeyId: bot_access_key,
+            secretAccessKey: bot_secret_access_key,
+            region: region
+        });
+
+        const params = {
+            botId: bot_id,
+            botAliasId: bot_alias_id,
+            localeId: 'es_419',
+            sessionId: sessionId,
+            text: message
+        };
+
+        const response = await lexClient.recognizeText(params).promise();
+
+        let content = "";
+
+        if (!response.messages) {
+            content = "No se ha podido obtener una respuesta del bot.";
+        } else {
+            content = response.messages[0].content;
+        }
+
+        const newSessionId = response.sessionId;
+        const sessionState = response.sessionState?.dialogAction?.type || '';
+        const intentName = response['sessionState']['intent']['name'];
+        console.log('intentName:', intentName);
+        if (sessionState === 'Close') {
+            console.log('Intent:', intentName);
+            if (intentName === 'listarClases') {
+                const nombreProfesor = content.toLowerCase();
+                const clases = await obtenerClases(nombreProfesor);
+                if (clases.length > 0) {
+                    content = "Las clases del profesor " + nombreProfesor + " son: " + clases.map(c => c.nombre).join(", ");
+                } else {
+                    content = "Lo siento, no tengo información sobre las clases de ese profesor.";
+                }
+            } else if (intentName === 'clasesPorEstrellas') {
+                const estrellas = content;
+                const query = 'SELECT * FROM clases WHERE Estrellas = ?';
+                pool.query(query, [estrellas], (err, result) => {
+                    if (err) {
+                        console.error('Error al obtener las clases:', err);
+                        res.status(500).json({ error: err });
+                    } else {
+                        res.status(200).json(result);
+                    }
+                });
+            } else if (intentName === 'clasesPorTipo') {
+                const tipo = content;
+                const query = 'SELECT * FROM clases WHERE Tipo = ?';
+                pool.query(query, [tipo], (err, result) => {
+                    if (err) {
+                        console.error('Error al obtener las clases:', err);
+                        res.status(500).json({ error: err });
+                    } else {
+                        res.status(200).json(result);
+                    }
+                });
+            }
+        }
+
+        res.status(200).json({ mensaje: content, nueva_sesion: newSessionId, estado_session: sessionState  });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor en obtener mensaje del bot' });
+    }
 });
 
 // escuchar puerto 3000

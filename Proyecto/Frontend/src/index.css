@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #0D1F2D;
+  color: white;
+}
+
+.chatbot-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  background-color: #354656;
+}
+
+.chatbot-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1001;
+  background-color: #FF3D3D;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.chatbot-chatbox {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 300px;
+  height: 400px;
+  background-color: #354656;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  
+}
+
+.chatbot-messages {
+  padding: 10px;
+  height: 345px;
+  overflow-y: scroll;
+  background-color:  #354656;
+}
+
+.message {
+  margin-bottom: 10px;
+  color: black; /* Letra negra */
+}
+
+.user {
+  text-align: right;
+}
+
+.bot {
+  text-align: left;
+}
+
+.chatbot-input-form {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 10px;
+  background-color: #1d2e3d;
+
+}
+
+.chatbot-input-form input {
+  width: calc(100% - 70px);
+  padding: 5px;
+  margin-right: 10px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  color: black;
+  background-color: #354656;
+}
+
+.chatbot-input-form button {
+  width: 60px;
+  padding: 5px 10px;
+  background-color: #ffe0c8;
+  color: black;
+  border: none;
+}
+
+
+

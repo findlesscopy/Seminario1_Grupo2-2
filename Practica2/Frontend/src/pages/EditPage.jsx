@@ -47,7 +47,7 @@ function EditPage() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        username: username,
+        username: username, 
         id_usuario: parseInt(id_usuario),
       }),
     })

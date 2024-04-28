@@ -957,25 +957,46 @@ app.post("/obtener_mensaje_bot", async (req, res) => {
       if (err) {
         console.error("Error al obtener las clases:", err);
         res.status(500).json({ error: err });
-        return
+        return;
       } else {
-        const resultString = result.map(row => {
-        return `ID: ${row.ID}, Nombre: ${row.Nombre}, Descripción: ${row.Descripcion}, Lugar: ${row.Lugar}, Profesor: ${row.Profesor}, Tipo: ${row.Tipo}, Fecha: ${row.Fecha}, Hora: ${row.Hora}, Cupo: ${row.Cupo}, Estrellas: ${row.Estrellas}`;}).join('\n');
+        const resultString = result
+          .map((row) => {
+            return `ID: ${row.ID}, Nombre: ${row.Nombre}, Descripción: ${row.Descripcion}, Lugar: ${row.Lugar}, Profesor: ${row.Profesor}, Tipo: ${row.Tipo}, Fecha: ${row.Fecha}, Hora: ${row.Hora}, Cupo: ${row.Cupo}, Estrellas: ${row.Estrellas}`;
+          })
+          .join("\n");
 
-        console.log("Content:", resultString);
-        console.log("Content:", result);
+        //console.log("Content:", resultString);
+        //console.log("Content:", result);
         res.status(200).json(resultString);
-        return
+        return;
       }
     });
-    
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({
       mensaje: "Error interno del servidor en obtener mensaje del bot",
     });
-    return
+    return;
   }
+});
+const translate = new AWS.Translate();
+app.post("/traducir", async (req, res) => {
+  const { texto } = req.body;
+  const params = {
+    SourceLanguageCode: "auto",
+    TargetLanguageCode: "en",
+    Text: texto,
+  };
+  translate.translateText(params, (err, data) => {
+    if (err) {
+      console.error("Error:", err);
+      res
+        .status(500)
+        .json({ mensaje: "Error interno del servidor al traducir" });
+    } else {
+      res.status(200).json({ traduccion: data.TranslatedText });
+    }
+  });
 });
 
 // escuchar puerto 3000

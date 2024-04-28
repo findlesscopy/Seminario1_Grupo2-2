@@ -34,7 +34,7 @@ Con nuestra aplicación, estamos transformando la forma en que las personas se c
 
 ### Cómo usar la aplicación
 
-### Funcionalidades de la Aplicación:
+### Funcionalidades de la Aplicación
 
 1. **Login:**  
    ![Login](./images/login.png)  

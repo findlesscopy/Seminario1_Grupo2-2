@@ -650,7 +650,7 @@ app.post('/solicitar_subir_nivel', (req, res) => {
 });
 
 // Obtener datos de usuario por id
-app.get('/usuarios/:id', (req, res) => {
+app.get('/usuario/:id', (req, res) => {
     const id = req.params.id;
     const query = 'SELECT * FROM usuarios WHERE ID = ?';
 
@@ -680,6 +680,65 @@ app.put('/usuarios/:id', (req, res) => {
         }
     });
 });
+
+// Aceptar solicitud por id de solicitud
+app.put('/aceptar_solicitud/:id', (req, res) => {
+    const id = req.params.id;
+    const query = 'UPDATE solicitudes SET Estado = "Aceptada" WHERE ID = ?';
+
+    pool.query(query, [id], (err, result) => {
+        if (err) {
+            console.error('Error al aceptar la solicitud:', err);
+            res.status(500).json({ error: err });
+        } else {
+            res.status(200).json({ message: 'Solicitud aceptada con éxito' });
+        }
+    });
+});
+
+// Rechazar solicitud por id de solicitud
+app.put('/rechazar_solicitud/:id', (req, res) => {
+    const id = req.params.id;
+    const query = 'UPDATE solicitudes SET Estado = "Rechazada" WHERE ID = ?';
+
+    pool.query(query, [id], (err, result) => {
+        if (err) {
+            console.error('Error al rechazar la solicitud:', err);
+            res.status(500).json({ error: err });
+        } else {
+            res.status(200).json({ message: 'Solicitud rechazada con éxito' });
+        }
+    });
+});
+
+// Obtener todos los Usuarios
+app.get('/usuarios/all', (req, res) => {
+    const query = 'SELECT * FROM usuarios';
+
+    pool.query(query, (err, result) => {
+        if (err) {
+            console.error('Error al obtener los usuarios:', err);
+            res.status(500).json({ error: err });
+        } else {
+            res.status(200).json(result);
+        }
+    });
+});
+
+// Obtnener todos los niveles
+app.get('/niveles', (req, res) => {
+    const query = 'SELECT * FROM niveles';
+
+    pool.query(query, (err, result) => {
+        if (err) {
+            console.error('Error al obtener los niveles:', err);
+            res.status(500).json({ error: err });
+        } else {
+            res.status(200).json(result);
+        }
+    });
+});
+
 
 // escuchar puerto 3000
 app.listen(3000, () => {

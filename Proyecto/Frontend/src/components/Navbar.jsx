@@ -2,6 +2,9 @@ import { Fragment } from 'react'
 import { Disclosure, Menu, Transition } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import Logo from '../assets/logo.svg'
+import Cookies from "js-cookie";
+import { useState, useEffect } from "react";
+import { API_URL } from "../pages/url";
 
 const navigation = [
   { name: 'Inicio', href: '/principal', current: false },
@@ -14,6 +17,18 @@ function classNames(...classes) {
 }
 
 export default function Navbar() {
+  const id_usuario = Cookies.get("id");
+
+  const [usuario, setUsuario] = useState([]);
+
+  useEffect(() => {
+    const obtenerUsuario = async () => {
+      const response = await fetch(`${API_URL}/usuario/${id_usuario}`);
+      const data = await response.json();
+      setUsuario(data);
+    };
+    obtenerUsuario();
+  }, []);
   return (
     <Disclosure as="nav" className="bg-bg200">
       {({ open }) => (
@@ -50,15 +65,18 @@ export default function Navbar() {
                 {/* Profile dropdown */}
                 <Menu as="div" className="relative ml-3">
                   <div>
-                    <Menu.Button className="relative flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+                    {usuario.map((usuario) => (
+                      <Menu.Button key={usuario.ID}  className="relative flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                       <span className="absolute -inset-1.5" />
                       <span className="sr-only">Open user menu</span>
                       <img
                         className="h-8 w-8 rounded-full"
-                        src="https://guatemalavisible.net/wp-content/uploads/2023/06/Bernardo_Arevalo_SEMILLA.jpg"
+                        src={`${usuario.FotoPerfil}`}
                         alt=""
                       />
                     </Menu.Button>
+                    ))}
+                    
                   </div>
                   <Transition
                     as={Fragment}

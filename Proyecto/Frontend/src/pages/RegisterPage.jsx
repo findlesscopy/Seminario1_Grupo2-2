@@ -8,7 +8,7 @@ import { API_URL } from "./url";
 import { ErrorModal } from "../components/ErrorModal";
 import { NotificationModal } from "../components/NotificacionModal";
 import { useNavigate } from "react-router-dom";
-import GoogleIcon from "../assets/google.svg";
+
 function RegisterPage() {
   const {
     register,
@@ -44,7 +44,7 @@ function RegisterPage() {
   };
 
   const onSubmit = async (data) => {
-    console.log(previewImage.split(",")[1].length);
+    console.log(data);
     try {
       const userResponse = await fetch(`${API_URL}/usuarios_crear`, {
         method: "POST",
@@ -52,9 +52,14 @@ function RegisterPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: data.username,
           nombre: data.name,
+          apellido: data.apellido,
+          correo: data.correo,
           contraseña: data.password,
+          peso: data.peso,
+          altura: data.altura,
+          nivel: 1,
+          foto: previewImage.split(",")[1],
         }),
       });
 
@@ -64,35 +69,12 @@ function RegisterPage() {
       } else {
         // Registro exitoso
         console.log("Usuario registrado correctamente");
-        const id_usuario = await userResponse.json();
-        // Subir la imagen
-        const imageResponse = await fetch(`${API_URL}/fotos-perfil`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Content-Length": `${previewImage.split(",")[1].length}`,
-          },
-          body: JSON.stringify({
-            nombre: data.username, // Utiliza el nombre de usuario del formulario
-            imagenBase64: previewImage.split(",")[1],
-            id_usuario: parseInt(id_usuario.id_usuario),
-          }),
-        });
-
-        // Verifica si la imagen se subió correctamente
-        if (!imageResponse.ok) {
-          const errorData = await imageResponse.json();
-          setError("Error al subir la imagen");
-          return; // Termina la función si hay un error al subir la imagen
-        } else {
-          console.log("Imagen subida correctamente");
-          setNotification("Usuario registrado correctamente");
-          setTimeout(() => {
+        setNotification("Usuario registrado correctamente");
+        setTimeout(() => {
             navigate("/login");
           }, 3000);
         }
-      }
-    } catch (error) {
+      } catch (error) {
       console.error("Error:", error);
     }
   };
@@ -169,7 +151,7 @@ function RegisterPage() {
 
           <div className="flex items-center justify-center">
             <div className="flex flex-col mr-3">
-              <Label htmlFor="peso">Peso (lb):</Label>
+              <Label htmlFor="peso">Peso (kg):</Label>
               <Input
                 type="text"
                 name="peso"
@@ -179,7 +161,7 @@ function RegisterPage() {
             </div>
 
             <div className="flex flex-col">
-              <Label htmlFor="altura">Altura (cm):</Label>
+              <Label htmlFor="altura">Altura (m):</Label>
               <Input
                 type="text"
                 name="altura"

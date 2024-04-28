@@ -10,6 +10,7 @@ import RutinasAdm from "./pages/AsignarNivelPage";
 import PerfilPage from "./pages/PerfilPage";
 import VerSolicitudesPage from "./pages/VerSolicitudesPage";
 import EjercicioPage from "./pages/EjercicioPage";
+import LoginWebCam from "./pages/LoginWebCam";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/perfil" element={<PerfilPage/>} />
         <Route path="/solicitudes" element={<VerSolicitudesPage/>} />
         <Route path="/ejercicio" element={<EjercicioPage/>} />
+        <Route path="/webcam" element={<LoginWebCam/>} />
       </Routes>
     </BrowserRouter>
   );

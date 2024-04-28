@@ -23,23 +23,23 @@ function LoginPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: data.username,
+          correo: data.username,
           contraseña: data.password,
         }),
       });
 
       if (!response.ok) {
         // Manejar error
+        setError("Contraseña o correo incorrecto")
       } else {
         const responseData = await response.json();
         console.log(responseData);
         Cookies.set("id", responseData.id_usuario);
-        Cookies.set("username", data.username);
         navigate("/principal");
       }
     } catch (error) {
       console.error("Error:", error);
-      setError("Error al iniciar sesión " + error);
+      setError("Error al iniciar sesión ");
     }
   };
 
@@ -53,12 +53,12 @@ function LoginPage() {
         <h1 className="text-2xl font-bold text-center">Login</h1>
         <br></br>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Label htmlFor="username">Username:</Label>
+          <Label htmlFor="username">Correo:</Label>
           <Input
             type="text"
             name="username"
             {...register("username", { required: true })}
-            placeholder="Username"
+            placeholder="Correo electronico"
           />
 
           <Label htmlFor="password">Contraseña:</Label>

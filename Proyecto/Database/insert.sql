@@ -76,9 +76,23 @@ INSERT INTO ejercicios (IDRutina, Nombre, Descripcion, Repeticiones, Series, Tip
 (9, 'Plancha con Palmada', 'Plancha con palmada para trabajar el core y mejorar la potencia', 10, 3, 'Potencia'),
 (9, 'Salto en Cuclillas', 'Salto vertical desde posición de cuclillas para desarrollar potencia de piernas', 8, 3, 'Potencia');
 
--- Insertar clases
+-- Insertar más clases de Yoga
 INSERT INTO clases (Nombre, Descripcion, Lugar, Profesor, Tipo, Fecha, Hora, Cupo)
 VALUES
-('Yoga', 'Clase de yoga para todos los niveles', 'Gimnasio Zen', 'Ana García', 'Yoga', '2024-04-21', '09:00:00', 20),
-('Pilates', 'Clase de pilates enfocada en el fortalecimiento corporal', 'Centro de Pilates', 'Juan Pérez', 'Pilates', '2024-04-22', '10:30:00', 15),
-('Entrenamiento Funcional', 'Clase de entrenamiento funcional para mejorar la resistencia y fuerza', 'Gimnasio Power', 'María López', 'Funcional', '2024-04-23', '17:00:00', 25);
+('Yoga Restaurativo', 'Clase de yoga suave enfocada en la relajación y la restauración del cuerpo', 'Centro de Yoga Vida', 'Elena Martínez', 'Yoga', '2024-04-24', '18:00:00', 15),
+('Yoga Vinyasa', 'Clase de yoga dinámica que combina movimiento fluido con la respiración', 'Gimnasio Flex', 'David Sánchez', 'Yoga', '2024-04-25', '19:30:00', 20),
+('Yoga Terapéutico', 'Clase de yoga diseñada para personas con lesiones o limitaciones físicas', 'Centro de Rehabilitación Física', 'Luisa Rodríguez', 'Yoga', '2024-04-26', '11:00:00', 10);
+
+-- Insertar más clases de Pilates
+INSERT INTO clases (Nombre, Descripcion, Lugar, Profesor, Tipo, Fecha, Hora, Cupo)
+VALUES
+('Pilates para Principiantes', 'Clase de pilates diseñada especialmente para principiantes', 'Gimnasio Pilates Fit', 'Carlos Gómez', 'Pilates', '2024-04-27', '10:00:00', 15),
+('Pilates Avanzado', 'Clase de pilates con ejercicios más avanzados para usuarios con experiencia', 'Centro Pilates Elite', 'Laura Fernández', 'Pilates', '2024-04-28', '18:30:00', 10),
+('Pilates en Grupo', 'Clase de pilates en grupo para disfrutar y compartir la experiencia', 'Gimnasio Pilates Center', 'Sara García', 'Pilates', '2024-04-29', '09:30:00', 20);
+
+-- Insertar más clases de Entrenamiento Funcional
+INSERT INTO clases (Nombre, Descripcion, Lugar, Profesor, Tipo, Fecha, Hora, Cupo)
+VALUES
+('HIIT', 'Clase de entrenamiento de alta intensidad (HIIT) para quemar calorías y mejorar la condición física', 'Gimnasio Power', 'Mario Martínez', 'Funcional', '2024-04-30', '17:30:00', 25),
+('Cross Training', 'Clase de cross training que combina ejercicios de fuerza y resistencia', 'Gimnasio CrossFit Pro', 'Pedro López', 'Funcional', '2024-05-01', '18:00:00', 20),
+('Entrenamiento en Circuito', 'Clase de entrenamiento en circuito para trabajar diferentes grupos musculares', 'Gimnasio Fit Zone', 'Natalia Ruiz', 'Funcional', '2024-05-02', '19:00:00', 20);

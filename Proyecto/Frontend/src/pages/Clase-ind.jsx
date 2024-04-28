@@ -24,6 +24,7 @@ export default function RutinasPage() {
     const obtenerUsuario = async () => {
       const response = await fetch(`${API_URL}/usuario/${Cookie.get("id")}`);
       const data = await response.json();
+      console.log(data);
       setUsuario(data);
     };
     obtenerUsuario();
@@ -31,6 +32,7 @@ export default function RutinasPage() {
   }, []);
 
   const handleRecordar = () => {
+    console.log(usuario)
     fetch (`${API_URL}/suscribir_email`, {
       method: "POST",
       headers: {

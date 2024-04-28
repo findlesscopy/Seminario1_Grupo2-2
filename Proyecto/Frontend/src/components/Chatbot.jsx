@@ -29,11 +29,11 @@ export function Chatbot() {
         });
 
         const data = await response.json();
-        console.log(data);
+        //console.log(data);
 
         setMessages((prevMessages) => [
           ...prevMessages,
-          { text: data.mensaje, sender: "bot" },
+          { text: data, sender: "bot" },
         ]);
         setInputMessage("");
       } catch (error) {

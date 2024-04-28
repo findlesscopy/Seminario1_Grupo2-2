@@ -101,7 +101,7 @@ Este usuario se uso para subir la página al S3
 Este grupo y usuario se uso para crear el bucket para almacenar las imagenes
 
 ![Grupo S3 Imágenes](Images/grupos3-imagenes.png)
-![Usuario S3 Imágenes](Images/s3imagenes-usuario.jpg)
+![Usuario S3 Imagenes](images/s3imagenes-usuario.jpg)
 
 ## Capturas de pantalla
 
@@ -113,7 +113,8 @@ Este grupo y usuario se uso para crear el bucket para almacenar las imagenes
 
 #### Node
 
-![EC2 Node](Images/ec2-node.jpg)
+![EC2 Node](images/ec2-node.jpg)
+![EC2 Python](images/ec2-python.jpg)
 
 ### Lex
 ![Bot](images/bot1.png)

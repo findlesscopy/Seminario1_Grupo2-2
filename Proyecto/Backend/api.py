@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configure AWS credentials
-aws_region = os.getenv('REGION')
+aws_region = os.getenv('AWS_REGION')
 aws_access_key_id_rekognition = os.getenv('AWS_ACCESS_KEY_IDR')
 aws_secret_access_key_rekognition = os.getenv('AWS_SECRET_ACCESS_KEYR')
 aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID_S3')

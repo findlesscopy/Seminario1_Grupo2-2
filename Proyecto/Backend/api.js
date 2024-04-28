@@ -826,7 +826,7 @@ app.post('/obtener_mensaje_bot', async (req, res) => {
         if (sessionState === 'Close') {
             console.log('Intent:', intentName);
             if (intentName === 'listarClases') {
-                const nombreProfesor = content.toLowerCase();
+                const nombreProfesor = response.sessionState.intent.slots.Profesor.value.interpretedValue.toLowerCase();
                 const clases = await obtenerClases(nombreProfesor);
                 if (clases.length > 0) {
                     content = "Las clases del profesor " + nombreProfesor + " son: " + clases.map(c => c.nombre).join(", ");

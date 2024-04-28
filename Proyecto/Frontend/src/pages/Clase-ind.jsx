@@ -62,7 +62,8 @@ export default function RutinasPage() {
     .then((data) => {
       console.log(data);
     });
-
+    
+    // esperar a que se suscriba al topic
     fetch(`${API_URL}/publicar_mensaje`, {
       method: "POST",
       headers: {
@@ -77,6 +78,7 @@ export default function RutinasPage() {
     .then((data) => {
       console.log(data);
     });
+
   }
 
   return (

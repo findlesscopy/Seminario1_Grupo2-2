@@ -40,15 +40,19 @@ El proyecto propuesto es una plataforma de gestión de clases de ejercicios fís
 
 ### Servicios de AWS utilizados
 
-* Amazon Cognito: Para la autenticación segura de los usuarios.
+* Amazon Cognito: Para la autenticación segura de los usuarios. Es un servicio que nos proporciona autenticación, autorización y gestion de usuarios para servicios web.
 
-* AWS Lambda: Para la gestión de las notificaciones automáticas y otras operaciones sin servidor.
+* AWS Lambda: Para la gestión de las notificaciones automáticas y otras operaciones sin servidor. Un servicio de computacion sin servidor que permite ejecutar codigo en respuesta sin necesidad de aprovisionar servidores.
 
-* Amazon Translate y Amazon Polly: Para la traducción y la conversión de texto a voz de las rutinas de ejercicio.
+* Amazon Translate y Amazon Polly: Para la traducción y la conversión de texto a voz de las rutinas de ejercicio. proporciona traduccion automatica de texto entre diferentes idiomas.
 
-* Amazon EC2, Amazon RDS y Amazon API Gateway: Para la implementación y gestión del sistema de búsqueda avanzada y clasificación de clases.
+* Amazon EC2, Amazon RDS y Amazon API Gateway: Para la implementación y gestión del sistema de búsqueda avanzada y clasificación de clases. Ofrece capacidad informatica escalable en la nube. Permite alamcenar datos en servidores virtuales.
 
-* Amazon Lex y Amazon Transcribe: Para el chat con funcionalidad de voz y la transcripción de mensajes de voz a texto.
+* Amazon Lex y Amazon Transcribe: Para el chat con funcionalidad de voz y la transcripción de mensajes de voz a texto. Permite crear interfaces de conversacion (chatbots) utilizando tecnologia de procesamiento del lenguaje natural y aprendizaje automatico.
+
+* Amazon SNS: Facilita la creación, envio y administracion de mensajes push y notificaciones por correo electronico y SMS a traves de diversos canales.
+
+* Amazon RDS: Nos proporciona bases de datos relacionales gestionadas en la nube.
 
 
 ## Descripción de la arquitectura

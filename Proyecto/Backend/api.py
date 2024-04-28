@@ -34,6 +34,15 @@ rekognition = boto3.client('rekognition', region_name=aws_region, aws_access_key
 s3_rekognition = boto3.client('s3', region_name=aws_region, aws_access_key_id=aws_access_key_id_rekognition, aws_secret_access_key=aws_secret_access_key_rekognition)
 s3 = boto3.client('s3', region_name=aws_region, aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
 sns = boto3.client('sns', region_name=aws_region, aws_access_key_id=aws_access_key_id_sns, aws_secret_access_key=aws_secret_access_key_sns)
+cognitoISP = boto3.client('cognito-idp', region_name=aws_region, aws_access_key_id=aws_access_key_id_cognito, aws_secret_access_key=aws_secret_access_key_cognito)
+translate = boto3.client('translate', region_name=aws_region)
+
+# Pool ID for Cognito
+pool_data = {
+    'UserPoolId': region_cognito,
+    'ClientId': cliente_cognito
+}
+cognito = boto3.client('cognito-idp', region_name=region_cognito)
 
 # Configure MySQL connection
 db_host = os.getenv('DB_HOST')

@@ -455,8 +455,11 @@ app.post("/reconocimiento_facial", async (req, res) => {
 
 // Crear topic
 async function createTopic(topicName) {
+  console.log("Creando topic:", topicName);
   const params = {
-    Name: topicName,
+    // parsear a string
+
+    Name: topicName.replace(" ", "_")
   };
 
   try {

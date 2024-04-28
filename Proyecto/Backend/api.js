@@ -964,7 +964,7 @@ app.post("/obtener_mensaje_bot", async (req, res) => {
       } else {
         const resultString = result
           .map((row) => {
-            return `ID: ${row.ID}, Nombre: ${row.Nombre}, Descripción: ${row.Descripcion}, Lugar: ${row.Lugar}, Profesor: ${row.Profesor}, Tipo: ${row.Tipo}, Fecha: ${row.Fecha}, Hora: ${row.Hora}, Cupo: ${row.Cupo}, Estrellas: ${row.Estrellas}`;
+            return `Nombre: ${row.Nombre}, Profesor: ${row.Profesor}, Tipo: ${row.Tipo}, Fecha: ${row.Fecha}, Hora: ${row.Hora}`;
           })
           .join("\n");
 

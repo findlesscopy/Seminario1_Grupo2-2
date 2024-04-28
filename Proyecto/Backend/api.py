@@ -19,6 +19,15 @@ aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID_S3')
 aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY_S3')
 aws_access_key_id_sns = os.getenv('AWS_ACCESS_KEY_ID_SNS')
 aws_secret_access_key_sns = os.getenv('AWS_SECRET_ACCESS_KEY_SNS')
+cliente_cognito = os.getenv('CLIENTE_COGNITO')
+region_cognito = os.getenv('REGION_COGNITO')
+aws_access_key_id_cognito = os.getenv('AWS_ACCESS_KEY_ID_COGNITO')
+aws_secret_access_key_cognito = os.getenv('AWS_SECRET_ACCESS_KEY_COGNITO')
+bot_access_key = os.getenv('BOT_ACCESS_KEY_ID')
+bot_secret_access_key = os.getenv('BOT_SECRET_ACCESS_KEY')
+bot_id = os.getenv('BOT_ID')
+bot_alias_id = os.getenv('BOT_ALIAS_ID')
+
 
 # Create AWS clients
 rekognition = boto3.client('rekognition', region_name=aws_region, aws_access_key_id=aws_access_key_id_rekognition, aws_secret_access_key=aws_secret_access_key_rekognition)

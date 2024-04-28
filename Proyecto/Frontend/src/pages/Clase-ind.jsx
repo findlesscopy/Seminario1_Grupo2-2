@@ -4,10 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Cookie from "js-cookie";
 import { API_URL } from "./url";
+import { set } from "react-hook-form";
+
 
 export default function RutinasPage() {
 
   const [clases, setClases] = useState([]);
+  const [usuario, setUsuario] = useState();
+  const [clase, setClase] = useState();
 
   useEffect(() => {
     const clases = async () => {
@@ -16,7 +20,49 @@ export default function RutinasPage() {
       setClases(data);
     };
     clases();
+
+    const obtenerUsuario = async () => {
+      const response = await fetch(`${API_URL}/usuario/${Cookie.get("id")}`);
+      const data = await response.json();
+      setUsuario(data);
+    };
+    obtenerUsuario();
+    
   }, []);
+
+  const handleRecordar = () => {
+    fetch (`${API_URL}/suscribir_email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        nombre: clases[0].Nombre,
+        email: usuario[0].CorreoElectronico,
+      }),
+    })
+    .then((res) => res.json())
+    .then((data) => {
+      console.log(data);
+    });
+
+    fetch(`${API_URL}/publicar_mensaje`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mensaje: `Se ha suscrito a la clase ${clases[0].Nombre}`,
+        topicName: clases[0].Nombre,
+      }),
+    })
+    .then((res) => res.json())
+    .then((data) => {
+      console.log(data);
+    });
+
+  }
+
 
   return (
     <div>
@@ -58,10 +104,10 @@ export default function RutinasPage() {
               Traducir
             </button>
             <button className="bg-primary100 px-4 py-1 rounded-md my-2 disabled:bg-indigo-300 w-full text-text-100">
-              <a href="/clases">Lectura en voz alta</a>
+              Lectura en voz alta
             </button>
-            <button className="bg-primary100 px-4 py-1 rounded-md my-2 disabled:bg-indigo-300 w-full text-text-100">
-              <a href="/clases">Recuerdame</a>
+            <button className="bg-primary100 px-4 py-1 rounded-md my-2 disabled:bg-indigo-300 w-full text-text-100" onClick={handleRecordar}>
+              Recuerdame
             </button>
           </div>
         ))}

@@ -46,7 +46,7 @@ function RegisterPage() {
   const onSubmit = async (data) => {
     console.log(data);
     try {
-      const userResponse = await fetch(`${API_URL}/usuarios_crear`, {
+      const userResponse = await fetch(`${API_URL}/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -20,6 +20,28 @@ export default function PerfilPage() {
       .then((res) => res.json())
       .then((data) => {
         console.log(data);
+      });
+
+    fetch(
+      `https://cbkfsop261.execute-api.us-east-1.amazonaws.com/EnviarCorreo`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          destinatario: "findlesscopy@gmail.com",
+          asunto: "[FITHUB] Solicitud de subir nivel de rutina",
+          mensaje:
+            "El usuario con id " +
+            id_usuario +
+            " solicita subir de nivel de rutina",
+        }),
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
         alert("Solicitud enviada");
       });
   };
@@ -36,6 +58,7 @@ export default function PerfilPage() {
     };
     obtenerUsuario();
   }, []);
+
 
   return (
     <>

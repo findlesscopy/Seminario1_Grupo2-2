@@ -11,6 +11,7 @@ import PerfilPage from "./pages/PerfilPage";
 import VerSolicitudesPage from "./pages/VerSolicitudesPage";
 import EjercicioPage from "./pages/EjercicioPage";
 import LoginWebCam from "./pages/LoginWebCam";
+import FitzyPage from "./pages/FitzyPage";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/solicitudes" element={<VerSolicitudesPage/>} />
         <Route path="/ejercicio" element={<EjercicioPage/>} />
         <Route path="/webcam" element={<LoginWebCam/>} />
+        <Route path="/fitzy" element={<FitzyPage/>} />
       </Routes>
     </BrowserRouter>
   );

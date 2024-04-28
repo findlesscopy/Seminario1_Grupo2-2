@@ -10,6 +10,7 @@ const navigation = [
   { name: 'Inicio', href: '/principal', current: false },
   { name: 'Clases', href: '/clases', current: false },
   { name: 'Rutinas', href: '/rutinas', current: false },
+  { name: 'Consejos con Fitzy', href: '/fitzy', current: false },
 ]
 
 function classNames(...classes) {

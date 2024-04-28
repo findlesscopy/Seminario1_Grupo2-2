@@ -682,33 +682,20 @@ def obtener_mensaje_bot():
         sessionState = response.get('sessionState', {}).get('dialogAction', {}).get('type', '')
         intentName = response.get('sessionState', {}).get('intent', {}).get('name', '')
         print('intentName:', intentName)
-        if sessionState == 'Close':
-            print('Intent:', intentName)
-            if intentName == 'listarClases':
-                nombreProfesor = content.lower()
-                clases = obtener_clases(nombreProfesor)
-                if len(clases) > 0:
-                    content = "Las clases del profesor " + nombreProfesor + " son: " + ", ".join([c['nombre'] for c in clases])
-                else:
-                    content = "Lo siento, no tengo información sobre las clases de ese profesor."
-            elif intentName == 'clasesPorEstrellas':
-                estrellas = content
-                query = 'SELECT * FROM clases WHERE Estrellas = %s'
-                cursor.execute(query, (estrellas,))
-                result = cursor.fetchall()
-                return jsonify(result), 200
-            elif intentName == 'clasesPorTipo':
-                tipo = content
-                query = 'SELECT * FROM clases WHERE Tipo = %s'
-                cursor.execute(query, (tipo,))
-                result = cursor.fetchall()
-                return jsonify(result), 200
+        print('Sessionstate:', sessionState)
+        print('Intent:', intentName)
 
-        return jsonify({'mensaje': content, 'nueva_sesion': newSessionId, 'estado_session': sessionState}), 200
+        query = 'SELECT * FROM clases ORDER BY Tipo'
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        result_string = "\n".join([f"Nombre: {row['Nombre']}, Profesor: {row['Profesor']}, Tipo: {row['Tipo']}, Fecha: {row['Fecha']}, Hora: {row['Hora']}" for row in result])
+
+        return jsonify(result_string), 200
+
     except Exception as e:
         print('Error:', e)
         return jsonify({'mensaje': 'Error interno del servidor en obtener mensaje del bot'}), 500
-        
 
 @app.route('/traducir', methods=['POST'])
 def traducir():

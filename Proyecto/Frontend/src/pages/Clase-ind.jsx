@@ -1,38 +1,53 @@
 import Navbar from "../components/Navbar";
 import { Chatbot } from "../components/Chatbot";
-import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Cookie from "js-cookie";
 import { API_URL } from "./url";
-import { set } from "react-hook-form";
 
 
 export default function RutinasPage() {
 
   const [clases, setClases] = useState([]);
   const [usuario, setUsuario] = useState();
-  const [clase, setClase] = useState();
+  const [desc, setDesc] = useState();
+  const [translatedDesc, setTranslatedDesc] = useState(""); // Agregamos estado para la descripción traducida
 
   useEffect(() => {
-    const clases = async () => {
+    const fetchClases = async () => {
       const response = await fetch(`${API_URL}/clases/${Cookie.get("clase")}`);
       const data = await response.json();
       setClases(data);
+      setDesc(data[0].Descripcion);
     };
-    clases();
+    fetchClases();
 
     const obtenerUsuario = async () => {
       const response = await fetch(`${API_URL}/usuario/${Cookie.get("id")}`);
       const data = await response.json();
-      console.log(data);
       setUsuario(data);
     };
     obtenerUsuario();
     
   }, []);
 
+  const handleTranslate = () => {
+    fetch(`${API_URL}/traducir`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        texto: clases[0].Descripcion,
+      }),
+    })
+    .then((res) => res.json())
+    .then((data) => {
+      console.log(data);
+      setTranslatedDesc(data.traduccion); // Actualizamos la descripción traducida
+    });
+  }
+
   const handleRecordar = () => {
-    console.log(usuario)
     fetch (`${API_URL}/suscribir_email`, {
       method: "POST",
       headers: {
@@ -62,9 +77,7 @@ export default function RutinasPage() {
     .then((data) => {
       console.log(data);
     });
-
   }
-
 
   return (
     <div>
@@ -100,13 +113,10 @@ export default function RutinasPage() {
             </div>
             <div className="flex ">
               <label className="text-xl font-bold mr-2">Descripción:</label>
-              <h1 className="text-xl ">{clase.Descripcion}</h1>
+              <h1 className="text-xl ">{translatedDesc ? translatedDesc : desc}</h1> {/* Usamos la descripción traducida si está disponible, de lo contrario, usamos la original */}
             </div>
-            <button className="bg-primary100 px-4 py-1 rounded-md my-2 disabled:bg-indigo-300 w-full text-text-100">
+            <button className="bg-primary100 px-4 py-1 rounded-md my-2 disabled:bg-indigo-300 w-full text-text-100" onClick={handleTranslate}>
               Traducir
-            </button>
-            <button className="bg-primary100 px-4 py-1 rounded-md my-2 disabled:bg-indigo-300 w-full text-text-100">
-              Lectura en voz alta
             </button>
             <button className="bg-primary100 px-4 py-1 rounded-md my-2 disabled:bg-indigo-300 w-full text-text-100" onClick={handleRecordar}>
               Recuerdame
@@ -118,3 +128,5 @@ export default function RutinasPage() {
     </div>
   );
 }
+
+

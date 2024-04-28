@@ -30,7 +30,7 @@ export default function PerfilPage() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          destinatario: "findlesscopy@gmail.com",
+          destinatario: "gym_fithub_semi1_grupo2@outlook.es",
           asunto: "[FITHUB] Solicitud de subir nivel de rutina",
           mensaje:
             "El usuario con id " +

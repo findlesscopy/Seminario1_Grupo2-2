@@ -348,6 +348,10 @@ def obtener_clases():
         with connection.cursor() as cursor:
             cursor.execute(query)
             result = cursor.fetchall()
+        
+        for row in result:
+            if isinstance(row['Hora'], datetime.timedelta):
+                row['Hora'] = str(row['Hora'])
 
         return jsonify(result), 200
 

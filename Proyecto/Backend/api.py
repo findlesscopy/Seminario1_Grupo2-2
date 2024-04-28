@@ -46,7 +46,7 @@ CORS(app)
 # Check endpoint
 @app.route('/check', methods=['GET'])
 def check():
-    return jsonify({'message': 'Server is running'}), 200
+    return jsonify({'message': 'Server is running Python'}), 200
 
 # Register endpoint
 @app.route('/register', methods=['POST'])
@@ -348,6 +348,10 @@ def obtener_clases():
         with connection.cursor() as cursor:
             cursor.execute(query)
             result = cursor.fetchall()
+        
+        for row in result:
+            if isinstance(row['Hora'], datetime.timedelta):
+                row['Hora'] = str(row['Hora'])
 
         return jsonify(result), 200
 
@@ -691,6 +695,23 @@ def obtener_mensaje_bot():
     except Exception as e:
         print('Error:', e)
         return jsonify({'mensaje': 'Error interno del servidor en obtener mensaje del bot'}), 500
+        
+
+@app.route('/traducir', methods=['POST'])
+def traducir():
+    texto = request.json.get('texto')
+    idioma = request.json.get('idioma')
+    try:
+        response = translate.translate_text(
+            Text=texto,
+            SourceLanguageCode='auto',
+            TargetLanguageCode=idioma
+        )
+        return jsonify({'traduccion': response.get('TranslatedText')}), 200
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'mensaje': 'Error interno del servidor al traducir'}), 500
+
 
 if __name__ == '__main__':
-    app.run(debug=True, host='3000')
+    app.run(debug=True, host='0.0.0.0', port=3000)

@@ -95,7 +95,7 @@ app.use(cors());
 
 //Check
 app.get("/check", (req, res) => {
-  res.status(200).json({ message: "Server is running" });
+  res.status(200).json({ message: "Server is running Node" });
 });
 
 // Agregar un nuevo usuario

@@ -37,12 +37,7 @@ sns = boto3.client('sns', region_name=aws_region, aws_access_key_id=aws_access_k
 cognitoISP = boto3.client('cognito-idp', region_name=aws_region, aws_access_key_id=aws_access_key_id_cognito, aws_secret_access_key=aws_secret_access_key_cognito)
 translate = boto3.client('translate', region_name=aws_region)
 
-# Pool ID for Cognito
-pool_data = {
-    'UserPoolId': region_cognito,
-    'ClientId': cliente_cognito
-}
-cognito = boto3.client('cognito-idp', region_name=region_cognito)
+
 
 # Configure MySQL connection
 db_host = os.getenv('DB_HOST')

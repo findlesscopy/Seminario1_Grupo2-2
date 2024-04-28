@@ -20,9 +20,9 @@ CREATE TABLE usuarios (
     Altura FLOAT,
     FotoPerfil VARCHAR(255),
     Nivel INT, -- Nivel de usuario
+    Tipo VARCHAR(50), -- Tipo de usuario Admin, Usuario
     FOREIGN KEY (Nivel) REFERENCES niveles(Nivel)
 );
-
 
 CREATE TABLE clases (
     ID INT AUTO_INCREMENT PRIMARY KEY,
@@ -33,7 +33,19 @@ CREATE TABLE clases (
     Tipo VARCHAR(50),
     Fecha DATE,
     Hora TIME,
-    Cupo INT
+    Cupo INT,
+    Estrellas INT -- Promedio de calificaciones
+);
+
+CREATE TABLE calificaciones (
+    ID INT AUTO_INCREMENT PRIMARY KEY,
+    IDUsuario INT,
+    IDClase INT,
+    Calificacion INT,
+    Fecha DATE,
+    FOREIGN KEY (IDUsuario) REFERENCES usuarios(ID),
+    FOREIGN KEY (IDClase) REFERENCES clases(ID),
+    UNIQUE (IDUsuario, IDClase) -- No se puede calificar dos veces la misma clase
 );
 
 CREATE TABLE inscripciones (

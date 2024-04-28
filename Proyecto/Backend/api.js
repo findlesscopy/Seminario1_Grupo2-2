@@ -840,8 +840,10 @@ app.post('/obtener_mensaje_bot', async (req, res) => {
                     if (err) {
                         console.error('Error al obtener las clases:', err);
                         res.status(500).json({ error: err });
+                        return
                     } else {
                         res.status(200).json(result);
+                        return
                     }
                 });
             } else if (intentName === 'clasesPorTipo') {

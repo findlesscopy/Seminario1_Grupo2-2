@@ -127,16 +127,24 @@ Este grupo y usuario se uso para crear el bucket para almacenar las imagenes
 
 ### Costos
 
-| Servicio              | Detalles                                        | Costo Estimado Mensual |
-|-----------------------|-------------------------------------------------|------------------------|
-| RDS                   | Tipo de instancia: db.t2.micro<br>Almacenamiento: 10 GB<br>Uso de E/S: 100 IOPS | $10.51                 |
-| EC2                   | Instancias: 2 x t2.micro<br>Tiempo de ejecución: 720 horas por mes | $36.00                 |
-| Balanceador de Cargas | Tipo de balanceador: Application Load Balancer<br>Tráfico: 100,000 solicitudes por mes | $17.50                 |
-| API Gateway           | Solicitudes: 1,000,000 por mes<br>Datos transferidos: 10 GB por mes | $3.50                  |
-| Función Lambda        | Memoria: 128 MB<br>Ejecuciones: 100,000 invocaciones por mes<br>Tiempo de ejecución: 100,000 segundos por mes | $0.57                  |
-| SNS                   | Mensajes enviados: 100,000 por mes<br>Notificaciones: 100,000 por mes | $0.58                  |
-| S3                    | Almacenamiento: 10 GB<br>Transferencia de datos: 1 GB por mes<br>Solicitudes: 10,000 por mes | $0.54                  |
-| Cognito               | Usuarios activos mensuales: 100<br>Autenticaciones: 10,000 por mes | $2.83                  |
-| Rekognition           | Imágenes analizadas: 1,000 por mes<br>Videos analizados: 100 minutos por mes | $6.72                  |
-| Lex                   | Solicitudes: 10,000 por mes<br>Texto procesado: 100,000 palabras por mes | $0.12                  |
-| **Total Estimado**    |                                                 | **$78.85**             |
+## Costos mensuales detallados de los servicios AWS para una app pequeña (100 usuarios)
+
+**Consideraciones:**
+
+- **Uso de la aplicación:** Supongamos que la aplicación tiene un uso promedio de 10 solicitudes por usuario por día.
+- **Región de AWS:** Usemos la región **us-east-1 (Norte de Virginia)** como ejemplo.
+
+| Servicio               | Descripción                                               | Costo Mensual | 
+|------------------------|-----------------------------------------------------------|---------------|
+| RDS                    | Tipo de instancia: db.t2.micro<br>Almacenamiento: 10 GB<br>E/S: 100 IOPS<br>[Más información](https://aws.amazon.com/rds/pricing/) | \$10.51       |
+| EC2                    | Instancias: 2 x t2.micro<br>Tiempo de ejecución: 720 horas por mes (30 días x 24 horas)<br>[Más información](https://aws.amazon.com/ec2/pricing/) | \$36.00       |
+| Balanceador de cargas  | Tipo de balanceador: Application Load Balancer<br>Tráfico: 100,000 solicitudes por mes<br>[Más información](https://aws.amazon.com/elasticloadbalancing/pricing/) | \$17.50       |
+| API Gateway            | Solicitudes: 1,000,000 solicitudes por mes<br>Datos transferidos: 10 GB por mes<br>[Más información](https://aws.amazon.com/api-gateway/pricing/) | \$3.50        |
+| Función Lambda         | Memoria: 128 MB<br>Ejecuciones: 100,000 invocaciones por mes<br>Tiempo de ejecución: 100,000 segundos por mes (aprox. 27 horas)<br>[Más información](https://aws.amazon.com/lambda/pricing/) | \$0.57        |
+| SNS                    | Mensajes enviados: 100,000 mensajes por mes<br>Notificaciones: 100,000 notificaciones por mes<br>[Más información](https://aws.amazon.com/sns/pricing/) | \$0.58        |
+| S3                     | Almacenamiento: 10 GB<br>Transferencia de datos: 1 GB por mes<br>Solicitudes: 10,000 solicitudes por mes<br>[Más información](https://aws.amazon.com/s3/pricing/) | \$0.54        |
+| Cognito                | Usuarios activos mensuales: 100 usuarios<br>Autenticaciones: 10,000 autenticaciones por mes<br>[Más información](https://aws.amazon.com/cognito/pricing/) | \$2.83        |
+| Rekognition            | Imágenes analizadas: 1,000 imágenes por mes<br>Videos analizados: 100 minutos de video por mes<br>[Más información](https://aws.amazon.com/rekognition/pricing/) | \$6.72        |
+| Lex                    | Solicitudes: 10,000 solicitudes por mes<br>Texto procesado: 100,000 palabras por mes<br>[Más información](https://aws.amazon.com/lex/pricing/) | \$0.12        |
+
+**Total estimado:** \$78.85

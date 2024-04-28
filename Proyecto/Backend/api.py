@@ -350,8 +350,8 @@ def obtener_clases():
             result = cursor.fetchall()
         
         for row in result:
-            if isinstance(row['Hora'], datetime.timedelta):
-                row['Hora'] = str(row['Hora'])
+            if isinstance(row['Hora'], datetime.time):
+                row['Hora'] = row['Hora'].strftime('%H:%M:%S')
 
         return jsonify(result), 200
 

@@ -959,8 +959,12 @@ app.post("/obtener_mensaje_bot", async (req, res) => {
         res.status(500).json({ error: err });
         return
       } else {
+        const resultString = result.map(row => {
+        return `ID: ${row.ID}, Nombre: ${row.Nombre}, Descripción: ${row.Descripcion}, Lugar: ${row.Lugar}, Profesor: ${row.Profesor}, Tipo: ${row.Tipo}, Fecha: ${row.Fecha}, Hora: ${row.Hora}, Cupo: ${row.Cupo}, Estrellas: ${row.Estrellas}`;}).join('\n');
+
+        console.log("Content:", resultString);
         console.log("Content:", result);
-        res.status(200).json(result);
+        res.status(200).json(resultString);
         return
       }
     });
